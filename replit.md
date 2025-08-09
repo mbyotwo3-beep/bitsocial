@@ -8,6 +8,15 @@ SatStream is a full-stack social media platform that integrates real Bitcoin Lig
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes (January 2025)
+
+- **Production Deployment Ready**: Created comprehensive README with both local and production deployment instructions
+- **Database Schema Fixed**: Resolved viewer_count column multiple default values error  
+- **TypeScript Errors Resolved**: Fixed storage service join queries and null handling
+- **Production Configuration**: Added Docker, PM2, Nginx configs and environment examples
+- **Health Check Endpoint**: Added /api/health for monitoring and production health checks
+- **Database Seeding**: Created sample data script for development and testing
+
 ## System Architecture
 
 ### Frontend Architecture

@@ -16,7 +16,7 @@ import {
   type InsertLiveStream
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, sql } from "drizzle-orm";
+import { eq, desc, and, or, sql } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -150,66 +150,52 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTransactions(userId: number, limit = 50): Promise<Array<Transaction & { sender?: User; receiver?: User }>> {
-    return await db
-      .select({
-        id: transactions.id,
-        senderId: transactions.senderId,
-        receiverId: transactions.receiverId,
-        type: transactions.type,
-        amount: transactions.amount,
-        status: transactions.status,
-        destinationAddress: transactions.destinationAddress,
-        transactionId: transactions.transactionId,
-        adminId: transactions.adminId,
-        createdAt: transactions.createdAt,
-        sender: {
-          id: sql`sender.id`,
-          username: sql`sender.username`,
-          email: sql`sender.email`,
-        },
-        receiver: {
-          id: sql`receiver.id`,
-          username: sql`receiver.username`,
-          email: sql`receiver.email`,
-        },
-      })
+    const results = await db
+      .select()
       .from(transactions)
-      .leftJoin(sql`${users} AS sender`, sql`${transactions.senderId} = sender.id`)
-      .leftJoin(sql`${users} AS receiver`, sql`${transactions.receiverId} = receiver.id`)
-      .where(sql`${transactions.senderId} = ${userId} OR ${transactions.receiverId} = ${userId}`)
+      .leftJoin(users, eq(transactions.senderId, users.id))
+      .where(or(eq(transactions.senderId, userId), eq(transactions.receiverId, userId)))
       .orderBy(desc(transactions.createdAt))
       .limit(limit);
+
+    return results.map(row => ({
+      id: row.transactions.id,
+      senderId: row.transactions.senderId,
+      receiverId: row.transactions.receiverId,
+      type: row.transactions.type,
+      amount: row.transactions.amount,
+      status: row.transactions.status,
+      destinationAddress: row.transactions.destinationAddress,
+      transactionId: row.transactions.transactionId,
+      adminId: row.transactions.adminId,
+      createdAt: row.transactions.createdAt,
+      sender: row.users || undefined,
+      receiver: undefined,
+    })) as Array<Transaction & { sender?: User; receiver?: User }>;
   }
 
   async getPendingWithdrawals(): Promise<Array<Transaction & { sender?: User; receiver?: User }>> {
-    return await db
-      .select({
-        id: transactions.id,
-        senderId: transactions.senderId,
-        receiverId: transactions.receiverId,
-        type: transactions.type,
-        amount: transactions.amount,
-        status: transactions.status,
-        destinationAddress: transactions.destinationAddress,
-        transactionId: transactions.transactionId,
-        adminId: transactions.adminId,
-        createdAt: transactions.createdAt,
-        sender: {
-          id: sql`sender.id`,
-          username: sql`sender.username`,
-          email: sql`sender.email`,
-        },
-        receiver: {
-          id: sql`receiver.id`,
-          username: sql`receiver.username`,
-          email: sql`receiver.email`,
-        },
-      })
+    const results = await db
+      .select()
       .from(transactions)
-      .leftJoin(sql`${users} AS sender`, sql`${transactions.senderId} = sender.id`)
-      .leftJoin(sql`${users} AS receiver`, sql`${transactions.receiverId} = receiver.id`)
+      .leftJoin(users, eq(transactions.senderId, users.id))
       .where(and(eq(transactions.type, "withdrawal"), eq(transactions.status, "pending")))
       .orderBy(desc(transactions.createdAt));
+
+    return results.map(row => ({
+      id: row.transactions.id,
+      senderId: row.transactions.senderId,
+      receiverId: row.transactions.receiverId,
+      type: row.transactions.type,
+      amount: row.transactions.amount,
+      status: row.transactions.status,
+      destinationAddress: row.transactions.destinationAddress,
+      transactionId: row.transactions.transactionId,
+      adminId: row.transactions.adminId,
+      createdAt: row.transactions.createdAt,
+      sender: row.users || undefined,
+      receiver: undefined,
+    })) as Array<Transaction & { sender?: User; receiver?: User }>;
   }
 
   async updateTransaction(id: number, updates: Partial<Transaction>): Promise<Transaction> {

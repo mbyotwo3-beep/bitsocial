@@ -425,7 +425,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
 
         // Update user balance
-        if (withdrawal.sender) {
+        if (withdrawal.sender && withdrawal.sender.balance !== null) {
           await storage.updateUser(withdrawal.senderId!, { 
             balance: withdrawal.sender.balance - withdrawal.amount 
           });
@@ -501,6 +501,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Stream creation error:', error);
       res.status(500).json({ message: 'Failed to create stream' });
     }
+  });
+
+  // Health check endpoint
+  app.get('/api/health', (req, res) => {
+    res.status(200).json({
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      environment: process.env.NODE_ENV || 'development',
+      version: '1.0.0'
+    });
   });
 
   return httpServer;

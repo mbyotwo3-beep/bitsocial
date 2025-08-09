@@ -3,6 +3,7 @@ import {
   bigint,
   boolean,
   index,
+  integer,
   jsonb,
   pgTable,
   serial,
@@ -79,7 +80,7 @@ export const liveStreams = pgTable("live_streams", {
   title: text("title").notNull(),
   description: text("description"),
   isActive: boolean("is_active").default(true),
-  viewerCount: serial("viewer_count").default(0),
+  viewerCount: integer("viewer_count").default(0),
   totalTips: bigint("total_tips", { mode: "number" }).default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
