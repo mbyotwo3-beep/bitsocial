@@ -1,0 +1,165 @@
+1. Introduction & Objectives
+
+This document serves as a detailed technical specification for an AI-assisted development of a social media web application. The core objective is to build a fully functional, full-stack application that integrates Bitcoin Lightning and on-chain payments using the Breez SDK. The application must provide a secure, non-custodial wallet experience for every user and a robust administrative interface for content moderation, withdrawal approval, and user management.
+2. Technology Stack
+
+    Frontend: React with Vite, Tailwind CSS, Shadcn/ui, lucide-react, and React Context.
+
+    Backend: Node.js, Express.js, PostgreSQL (with Sequelize ORM), Breez SDK, socket.io, multer, and jsonwebtoken.
+
+3. Data Models (PostgreSQL Tables)
+
+We will use a relational database with the following table schemas.
+users Table
+
+This table defines the user's profile and wallet information.
+
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(255) NOT NULL UNIQUE,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    wallet_id VARCHAR(255) NOT NULL UNIQUE,
+    balance BIGINT DEFAULT 0, -- In satoshis, using BIGINT for large numbers
+    is_admin BOOLEAN DEFAULT FALSE,
+    is_banned BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+
+
+posts Table
+
+This table represents a single piece of user-generated content.
+
+CREATE TABLE posts (
+    id SERIAL PRIMARY KEY,
+    author_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    content_type VARCHAR(50) NOT NULL,
+    content_url TEXT,
+    text TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+
+
+reactions Table
+
+This junction table handles reactions (e.g., likes, tips) to a post, allowing a user to react multiple times (or tip different amounts).
+
+CREATE TABLE reactions (
+    id SERIAL PRIMARY KEY,
+    post_id INTEGER NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    reaction_type VARCHAR(50) NOT NULL, -- e.g., 'like', 'tip'
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+
+
+transactions Table
+
+This table tracks all payments, tips, and withdrawal requests.
+
+CREATE TABLE transactions (
+    id SERIAL PRIMARY KEY,
+    sender_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    receiver_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    type VARCHAR(50) NOT NULL, -- 'tip', 'reward', 'withdrawal'
+    amount BIGINT NOT NULL, -- Amount in satoshis
+    status VARCHAR(50) DEFAULT 'completed', -- 'pending', 'approved', 'denied', 'completed'
+    destination_address TEXT,
+    transaction_id TEXT, -- ID from Breez SDK
+    admin_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+
+
+4. Backend API Endpoints
+
+The API will be built using Express.js and protected by JWT authentication where specified.
+A. Auth Routes (/server/routes/auth.js)
+
+    POST /api/auth/register: Creates a new user, provisions a Breez SDK wallet, and returns a JWT.
+
+    POST /api/auth/login: Authenticates a user and returns a JWT.
+
+    GET /api/auth/profile: (Protected) Fetches the current user's profile and wallet balance.
+
+B. Content Routes (/server/routes/posts.js)
+
+    POST /api/posts/upload: (Protected) Uploads a new post (photo/video/text) with multer. Banned users will not be able to post.
+
+    GET /api/posts/feed: (Protected) Fetches a paginated list of posts for the main feed.
+
+    POST /api/posts/:id/react: (Protected) Adds a reaction to a post, potentially triggering a micro-transaction. Banned users will not be able to react.
+
+    DELETE /api/posts/:id: (Admin Protected) Deletes a specific post.
+
+C. Lightning/Wallet Routes (/server/routes/lightning.js)
+
+    POST /api/lightning/tip: (Protected) Initiates a tip to a content creator, generating and paying a Lightning invoice via the Breez SDK. Banned users will not be able to tip.
+
+    POST /api/lightning/withdraw-request: (Protected) User submits a request to withdraw funds to a specified on-chain or Lightning address. This creates a pending transaction in the database. Banned users will not be able to submit a withdrawal request.
+
+D. Admin Routes (/server/routes/admin.js)
+
+    GET /api/admin/withdrawal-requests: (Admin Protected) Fetches all pending withdrawal requests.
+
+    POST /api/admin/withdrawal-requests/:id/approve: (Admin Protected) Approves a pending withdrawal, calls the Breez SDK to execute the transaction, and updates the transaction status to completed.
+
+    POST /api/admin/withdrawal-requests/:id/deny: (Admin Protected) Denies a withdrawal request and updates the transaction status to denied.
+
+    POST /api/admin/users/:id/ban: (Admin Protected) Bans a user by setting their is_banned field to true.
+
+5. Frontend Component Breakdown
+
+    <App>: The main application container. Manages global state (user, wallet, etc.) via React Context.
+
+    <Header>: Displays user profile link and wallet balance.
+
+    <AuthPages>: Login and registration forms. Banned users will not be able to log in.
+
+    <ContentFeed>: The main scrollable feed. Renders <Post> components.
+
+    <Post>: Displays a single post. Includes a "tip" button that calls the /api/lightning/tip endpoint. Banned users cannot tip.
+
+    <WalletPage>: Displays the user's detailed balance and provides a form to submit a withdrawal request, calling /api/lightning/withdraw-request. Banned users cannot submit withdrawal requests.
+
+    <AdminDashboard>: Renders different admin views. This dashboard will now include a user management component where an admin can search for and ban users. One key view will be the <WithdrawalRequestsList> component.
+
+    <WithdrawalRequestsList>: Fetches all pending withdrawal requests from /api/admin/withdrawal-requests and displays a list with "Approve" and "Deny" buttons that call the respective admin API endpoints.
+
+6. Breez SDK Service Layer (/server/services/breezService.js)
+
+This service encapsulates all Breez SDK calls, ensuring the backend logic is clean and reusable. The AI should implement the following core functions:
+
+    initializeSdk(seed, apiKey): Initializes the Breez SDK with the user's wallet seed and a Breez API key. This is a crucial step to be performed on user login.
+
+    getBalance(): Fetches the current wallet balance.
+
+    sendPayment(invoice): Pays a Lightning invoice.
+
+    sendOnchain(address, amount): Initiates a standard on-chain Bitcoin transaction to a given address.
+
+    receiveOnchain(): Creates a new on-chain address for receiving funds.
+
+    preparePayOnchain(amount): Estimates fees and validates an on-chain transaction before execution.
+
+The implementation of sendOnchain will be a critical part of the admin approval workflow.
+7. Core Logic & Workflow
+
+    User Registration: A new user signs up. The backend generates a wallet seed and uses it to provision a new Breez SDK wallet. The generated wallet_id and the seed (encrypted) are stored in the users table. A JWT is issued.
+
+    User Login: The login process will now check the is_banned field. Banned users will be denied access.
+
+    Tipping: A user clicks "tip." The frontend calls /api/lightning/tip. The backend first checks if the user is banned. If not, it generates a Lightning invoice for the receiver and uses the breezService.sendPayment() function to pay it from the tipper's wallet.
+
+    Withdrawal Request: A user enters a destination address and amount in the <WalletPage>. The frontend calls /api/lightning/withdraw-request. The backend first checks if the user is banned. If not, it creates a new transactions table entry with status: 'pending'.
+
+    Admin Approval: An admin user logs in and navigates to the <AdminDashboard>. The <WithdrawalRequestsList> component fetches all pending transactions. The admin clicks "Approve." The frontend calls /api/admin/withdrawal-requests/:id/approve. The backend, using the breezService.sendOnchain() function, initiates the on-chain transaction and updates the transactions table entry status to completed.
+
+    Admin User Management: An admin can now navigate to a user list in the dashboard and click a "Ban" button next to a user's name. This triggers a call to POST /api/admin/users/:id/ban, which updates the is_banned field in the database.
+
+The AI should pay close attention to error handling and security, especially around the wallet seed, JWTs, admin-protected routes, and now the is_banned flag checks on all key user actions.
