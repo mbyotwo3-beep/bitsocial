@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SatStream - Bitcoin Social Media & Livestreaming Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        bitcoin: '#F7931A',
+                        lightning: '#0081CC',
+                        'bitcoin-dark': '#E8860F',
+                        'lightning-dark': '#006BA6'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        };
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-50 font-sans">
+    <!-- @COMPONENT: App [main application container with global state] -->
+    <div id="app" class="min-h-screen">
+        
+        <!-- @COMPONENT: AuthModal [login/register forms] -->
+        <div id="authModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+                <div class="p-8">
+                    <div class="text-center mb-8">
+                        <div class="w-16 h-16 bg-gradient-to-br from-bitcoin to-lightning rounded-xl mx-auto mb-4 flex items-center justify-center">
+                            <i class="fas fa-bolt text-white text-2xl"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold text-slate-800">Join SatStream</h2>
+                        <p class="text-slate-600 mt-2">Earn Bitcoin while you create</p>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Username</label>
+                            <input type="text" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-bitcoin focus:border-transparent" placeholder="Enter username" data-mock="true">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Email</label>
+                            <input type="email" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-bitcoin focus:border-transparent" placeholder="Enter email" data-mock="true">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Password</label>
+                            <input type="password" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-bitcoin focus:border-transparent" placeholder="Enter password" data-mock="true">
+                        </div>
+                        
+                        <button class="w-full bg-gradient-to-r from-bitcoin to-lightning text-white py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity" data-event="click:handleRegister">
+                            Create Account & Wallet
+                        </button>
+                        
+                        <div class="text-center">
+                            <button class="text-lightning hover:text-lightning-dark text-sm" data-event="click:switchToLogin">
+                                Already have an account? Sign in
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: AuthModal -->
+
+        <!-- @COMPONENT: Header [navigation and user info] -->
+        <header class="bg-white border-b border-slate-200 sticky top-0 z-40">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
+                    <div class="flex items-center space-x-4">
+                        <div class="flex items-center space-x-2">
+                            <div class="w-8 h-8 bg-gradient-to-br from-bitcoin to-lightning rounded-lg flex items-center justify-center">
+                                <i class="fas fa-bolt text-white text-sm"></i>
+                            </div>
+                            <span class="text-xl font-bold text-slate-800">SatStream</span>
+                        </div>
+                        
+                        <nav class="hidden md:flex space-x-6">
+                            <a href="#" class="text-slate-600 hover:text-slate-800 font-medium">Feed</a>
+                            <a href="#" class="text-slate-600 hover:text-slate-800 font-medium">Live</a>
+                            <a href="#" class="text-slate-600 hover:text-slate-800 font-medium">Explore</a>
+                        </nav>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4">
+                        <!-- Wallet Balance -->
+                        <div class="hidden sm:flex items-center space-x-2 bg-slate-100 rounded-xl px-3 py-2">
+                            <i class="fas fa-wallet text-bitcoin"></i>
+                            <span class="text-sm font-semibold text-slate-700" data-bind="user.balance">1,250 sats</span>
+                        </div>
+                        
+                        <!-- User Profile -->
+                        <div class="flex items-center space-x-3">
+                            <button class="relative">
+                                <i class="fas fa-bell text-slate-600 text-lg"></i>
+                                <span class="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
+                            </button>
+                            <!-- A professional headshot of a content creator smiling -->
+                            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100" alt="User avatar" class="w-8 h-8 rounded-full" data-bind="user.avatar">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+        <!-- @END_COMPONENT: Header -->
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                
+                <!-- @COMPONENT: Sidebar [navigation and quick actions] -->
+                <aside class="lg:col-span-1">
+                    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sticky top-24">
+                        <div class="space-y-4">
+                            <button class="w-full bg-gradient-to-r from-bitcoin to-lightning text-white py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity" data-event="click:openCreatePost">
+                                <i class="fas fa-plus mr-2"></i>
+                                Create Post
+                            </button>
+                            
+                            <button class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity" data-event="click:startLivestream">
+                                <i class="fas fa-video mr-2"></i>
+                                Go Live
+                            </button>
+                            
+                            <div class="border-t border-slate-200 pt-4">
+                                <nav class="space-y-2">
+                                    <a href="#" class="flex items-center space-x-3 text-slate-700 hover:text-slate-900 py-2">
+                                        <i class="fas fa-home w-5"></i>
+                                        <span>Home</span>
+                                    </a>
+                                    <a href="#" class="flex items-center space-x-3 text-slate-700 hover:text-slate-900 py-2">
+                                        <i class="fas fa-wallet w-5"></i>
+                                        <span>Wallet</span>
+                                    </a>
+                                    <a href="#" class="flex items-center space-x-3 text-slate-700 hover:text-slate-900 py-2">
+                                        <i class="fas fa-chart-line w-5"></i>
+                                        <span>Analytics</span>
+                                    </a>
+                                    <a href="#" class="flex items-center space-x-3 text-slate-700 hover:text-slate-900 py-2">
+                                        <i class="fas fa-cog w-5"></i>
+                                        <span>Settings</span>
+                                    </a>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                </aside>
+                <!-- @END_COMPONENT: Sidebar -->
+
+                <!-- @COMPONENT: ContentFeed [main content area] -->
+                <main class="lg:col-span-3">
+                    
+                    <!-- Live Streams Section -->
+                    <div class="mb-8">
+                        <h2 class="text-xl font-bold text-slate-800 mb-4">Live Now</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            <!-- @MAP: liveStreams.map(stream => ( -->
+                            <div class="relative bg-black rounded-2xl overflow-hidden group cursor-pointer" data-event="click:openLiveStream">
+                                <!-- A vibrant gaming setup with RGB lighting and multiple monitors -->
+                                <img src="https://images.unsplash.com/photo-1542751371-adc38448a05e?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=600&h=400" alt="Live stream thumbnail" class="w-full h-48 object-cover">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                                <div class="absolute top-3 left-3">
+                                    <span class="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-semibold flex items-center">
+                                        <span class="w-2 h-2 bg-white rounded-full mr-1 animate-pulse"></span>
+                                        LIVE
+                                    </span>
+                                </div>
+                                <div class="absolute top-3 right-3">
+                                    <span class="bg-black/50 text-white px-2 py-1 rounded-full text-xs">
+                                        <i class="fas fa-eye mr-1"></i>
+                                        1.2K
+                                    </span>
+                                </div>
+                                <div class="absolute bottom-0 left-0 right-0 p-4">
+                                    <h3 class="text-white font-semibold" data-bind="stream.title">Building Bitcoin App Live!</h3>
+                                    <p class="text-white/80 text-sm" data-bind="stream.creator">@bitcoindev</p>
+                                </div>
+                            </div>
+                            <!-- @END_MAP )) -->
+                            
+                            <div class="relative bg-black rounded-2xl overflow-hidden group cursor-pointer">
+                                <!-- A musician performing with guitar in a studio setting -->
+                                <img src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=600&h=400" alt="Live music stream" class="w-full h-48 object-cover">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                                <div class="absolute top-3 left-3">
+                                    <span class="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-semibold flex items-center">
+                                        <span class="w-2 h-2 bg-white rounded-full mr-1 animate-pulse"></span>
+                                        LIVE
+                                    </span>
+                                </div>
+                                <div class="absolute top-3 right-3">
+                                    <span class="bg-black/50 text-white px-2 py-1 rounded-full text-xs">
+                                        <i class="fas fa-eye mr-1"></i>
+                                        854
+                                    </span>
+                                </div>
+                                <div class="absolute bottom-0 left-0 right-0 p-4">
+                                    <h3 class="text-white font-semibold">Acoustic Sessions for Sats</h3>
+                                    <p class="text-white/80 text-sm">@musicmaker</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Posts Feed -->
+                    <div class="space-y-6">
+                        <!-- @MAP: posts.map(post => ( -->
+                        <!-- @COMPONENT: Post [individual post component] -->
+                        <article class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                            <div class="p-6">
+                                <div class="flex items-center space-x-3 mb-4">
+                                    <!-- A professional portrait of a female tech entrepreneur -->
+                                    <img src="https://pixabay.com/get/g437c2f86b68658bb3050f934e704e7e17c7e1b52d67475b2cd068acbbd9e9eebd62db57e20d36301d80383b9cea2dbccc3f9a099587117d2417d8f4205f67c32_1280.jpg" alt="Post author" class="w-12 h-12 rounded-full" data-bind="post.author.avatar">
+                                    <div>
+                                        <h3 class="font-semibold text-slate-800" data-bind="post.author.username">@sarahtech</h3>
+                                        <p class="text-sm text-slate-500" data-bind="post.createdAt">2 hours ago</p>
+                                    </div>
+                                </div>
+                                
+                                <p class="text-slate-700 mb-4" data-bind="post.content" data-mock="true">
+                                    Just launched my new Bitcoin tutorial series! 🚀 Learn how to build Lightning apps from scratch. 
+                                    The future of payments is here! #Bitcoin #Lightning #WebDev
+                                </p>
+                                
+                                <!-- A workspace setup with Bitcoin educational materials and coding screens -->
+                                <img src="https://images.unsplash.com/photo-1551650975-87deedd944c3?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&h=400" alt="Bitcoin tutorial workspace" class="w-full h-64 object-cover rounded-xl mb-4" data-bind="post.imageUrl">
+                            </div>
+                            
+                            <div class="px-6 pb-6">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-6">
+                                        <button class="flex items-center space-x-2 text-slate-600 hover:text-red-500 transition-colors" data-event="click:likePost">
+                                            <i class="fas fa-heart"></i>
+                                            <span data-bind="post.likes">42</span>
+                                        </button>
+                                        
+                                        <button class="flex items-center space-x-2 text-slate-600 hover:text-blue-500 transition-colors">
+                                            <i class="fas fa-comment"></i>
+                                            <span data-bind="post.comments">8</span>
+                                        </button>
+                                        
+                                        <button class="flex items-center space-x-2 text-slate-600 hover:text-green-500 transition-colors">
+                                            <i class="fas fa-share"></i>
+                                        </button>
+                                    </div>
+                                    
+                                    <div class="flex items-center space-x-2">
+                                        <button class="bg-gradient-to-r from-bitcoin to-lightning text-white px-4 py-2 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity" data-event="click:tipCreator">
+                                            <i class="fas fa-bolt mr-1"></i>
+                                            Tip Sats
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </article>
+                        <!-- @END_COMPONENT: Post -->
+                        
+                        <article class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                            <div class="p-6">
+                                <div class="flex items-center space-x-3 mb-4">
+                                    <!-- A portrait of a young male developer with glasses -->
+                                    <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100" alt="Developer portrait" class="w-12 h-12 rounded-full">
+                                    <div>
+                                        <h3 class="font-semibold text-slate-800">@devmike</h3>
+                                        <p class="text-sm text-slate-500">4 hours ago</p>
+                                    </div>
+                                </div>
+                                
+                                <p class="text-slate-700 mb-4" data-mock="true">
+                                    Exciting news! Just received my first Lightning payment for my open source work. 
+                                    The micropayments revolution is real! 💡⚡
+                                </p>
+                            </div>
+                            
+                            <div class="px-6 pb-6">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-6">
+                                        <button class="flex items-center space-x-2 text-slate-600 hover:text-red-500 transition-colors">
+                                            <i class="fas fa-heart"></i>
+                                            <span>156</span>
+                                        </button>
+                                        <button class="flex items-center space-x-2 text-slate-600 hover:text-blue-500 transition-colors">
+                                            <i class="fas fa-comment"></i>
+                                            <span>23</span>
+                                        </button>
+                                        <button class="flex items-center space-x-2 text-slate-600 hover:text-green-500 transition-colors">
+                                            <i class="fas fa-share"></i>
+                                        </button>
+                                    </div>
+                                    <button class="bg-gradient-to-r from-bitcoin to-lightning text-white px-4 py-2 rounded-xl text-sm font-semibold hover:opacity-90 transition-opacity">
+                                        <i class="fas fa-bolt mr-1"></i>
+                                        Tip Sats
+                                    </button>
+                                </div>
+                            </div>
+                        </article>
+                        <!-- @END_MAP )) -->
+                    </div>
+                    
+                    <!-- Load More Button -->
+                    <div class="text-center mt-8">
+                        <button class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-6 py-3 rounded-xl font-medium transition-colors" data-event="click:loadMorePosts">
+                            Load More Posts
+                        </button>
+                    </div>
+                </main>
+                <!-- @END_COMPONENT: ContentFeed -->
+            </div>
+        </div>
+
+        <!-- @COMPONENT: LiveStreamModal [livestream viewer interface] -->
+        <div id="livestreamModal" class="hidden fixed inset-0 bg-black z-50">
+            <div class="h-full flex">
+                <!-- Video Player -->
+                <div class="flex-1 relative">
+                    <!-- A live coding session showing Bitcoin development on multiple monitors -->
+                    <img src="https://images.unsplash.com/photo-1551650975-87deedd944c3?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1920&h=1080" alt="Live stream video" class="w-full h-full object-cover">
+                    
+                    <!-- Live Reactions Overlay -->
+                    <div class="absolute top-4 right-4 space-y-2" id="liveReactions">
+                        <!-- Real-time reaction animations would appear here -->
+                        <div class="bg-bitcoin/90 text-white px-3 py-1 rounded-full text-sm animate-pulse">
+                            <i class="fas fa-bolt mr-1"></i>
+                            +100 sats from @viewer1
+                        </div>
+                    </div>
+                    
+                    <!-- Stream Controls -->
+                    <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6">
+                        <div class="flex items-center justify-between text-white">
+                            <div>
+                                <h2 class="text-xl font-bold">Building Bitcoin Apps Live!</h2>
+                                <p class="text-white/80">@bitcoindev • 1,234 viewers</p>
+                            </div>
+                            <button class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-xl" data-event="click:closeLiveStream">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Chat Sidebar -->
+                <div class="w-80 bg-slate-900 flex flex-col">
+                    <div class="p-4 border-b border-slate-700">
+                        <h3 class="text-white font-semibold">Live Chat</h3>
+                        <p class="text-slate-400 text-sm">1,234 viewers</p>
+                    </div>
+                    
+                    <!-- Chat Messages -->
+                    <div class="flex-1 overflow-y-auto p-4 space-y-3">
+                        <!-- @MAP: chatMessages.map(message => ( -->
+                        <div class="flex space-x-2">
+                            <div class="w-6 h-6 bg-bitcoin rounded-full flex-shrink-0"></div>
+                            <div>
+                                <span class="text-bitcoin text-sm font-semibold" data-bind="message.username">viewer1</span>
+                                <span class="text-white text-sm ml-1" data-bind="message.content" data-mock="true">Great tutorial! 🚀</span>
+                            </div>
+                        </div>
+                        
+                        <div class="flex space-x-2">
+                            <div class="w-6 h-6 bg-lightning rounded-full flex-shrink-0"></div>
+                            <div>
+                                <span class="text-lightning text-sm font-semibold">viewer2</span>
+                                <span class="text-white text-sm ml-1" data-mock="true">Just tipped 500 sats! ⚡</span>
+                            </div>
+                        </div>
+                        
+                        <div class="flex space-x-2">
+                            <div class="w-6 h-6 bg-green-500 rounded-full flex-shrink-0"></div>
+                            <div>
+                                <span class="text-green-500 text-sm font-semibold">viewer3</span>
+                                <span class="text-white text-sm ml-1" data-mock="true">Can you explain the Lightning Network more?</span>
+                            </div>
+                        </div>
+                        <!-- @END_MAP )) -->
+                    </div>
+                    
+                    <!-- Chat Input -->
+                    <div class="p-4 border-t border-slate-700">
+                        <div class="flex space-x-2 mb-3">
+                            <button class="bg-bitcoin hover:bg-bitcoin-dark text-white px-3 py-2 rounded-lg text-sm font-semibold flex-1" data-event="click:quickTip">
+                                <i class="fas fa-bolt mr-1"></i>
+                                Tip 100
+                            </button>
+                            <button class="bg-lightning hover:bg-lightning-dark text-white px-3 py-2 rounded-lg text-sm font-semibold flex-1" data-event="click:quickTip">
+                                <i class="fas fa-bolt mr-1"></i>
+                                Tip 500
+                            </button>
+                        </div>
+                        <div class="flex space-x-2">
+                            <input type="text" placeholder="Type a message..." class="flex-1 bg-slate-800 text-white px-3 py-2 rounded-lg border border-slate-600 focus:border-bitcoin focus:outline-none" data-mock="true">
+                            <button class="bg-bitcoin hover:bg-bitcoin-dark text-white px-4 py-2 rounded-lg" data-event="click:sendMessage">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: LiveStreamModal -->
+
+        <!-- @COMPONENT: WalletPage [wallet management interface] -->
+        <div id="walletPage" class="hidden fixed inset-0 bg-slate-50 z-40 overflow-y-auto">
+            <div class="max-w-4xl mx-auto px-4 py-8">
+                <div class="flex items-center justify-between mb-8">
+                    <h1 class="text-3xl font-bold text-slate-800">My Wallet</h1>
+                    <button class="text-slate-600 hover:text-slate-800" data-event="click:closeWallet">
+                        <i class="fas fa-times text-2xl"></i>
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Balance Card -->
+                    <div class="lg:col-span-2">
+                        <div class="bg-gradient-to-br from-bitcoin to-lightning rounded-2xl text-white p-8 mb-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <h2 class="text-xl font-semibold">Bitcoin Balance</h2>
+                                <i class="fas fa-wallet text-2xl"></i>
+                            </div>
+                            <div class="text-4xl font-bold mb-2" data-bind="user.balance">1,250 sats</div>
+                            <p class="text-white/80">≈ $0.43 USD</p>
+                        </div>
+                        
+                        <!-- Transaction History -->
+                        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                            <h3 class="text-xl font-bold text-slate-800 mb-4">Recent Transactions</h3>
+                            <div class="space-y-4">
+                                <!-- @MAP: transactions.map(tx => ( -->
+                                <div class="flex items-center justify-between py-3 border-b border-slate-100 last:border-b-0">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                                            <i class="fas fa-arrow-down text-green-600"></i>
+                                        </div>
+                                        <div>
+                                            <p class="font-semibold text-slate-800" data-bind="tx.description" data-mock="true">Tip received from @viewer1</p>
+                                            <p class="text-sm text-slate-500" data-bind="tx.timestamp" data-mock="true">2 hours ago</p>
+                                        </div>
+                                    </div>
+                                    <span class="text-green-600 font-semibold" data-bind="tx.amount" data-mock="true">+100 sats</span>
+                                </div>
+                                
+                                <div class="flex items-center justify-between py-3 border-b border-slate-100">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                                            <i class="fas fa-arrow-up text-red-600"></i>
+                                        </div>
+                                        <div>
+                                            <p class="font-semibold text-slate-800" data-mock="true">Tip sent to @sarahtech</p>
+                                            <p class="text-sm text-slate-500" data-mock="true">5 hours ago</p>
+                                        </div>
+                                    </div>
+                                    <span class="text-red-600 font-semibold" data-mock="true">-50 sats</span>
+                                </div>
+                                <!-- @END_MAP )) -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Withdrawal Section -->
+                    <div class="space-y-6">
+                        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                            <h3 class="text-lg font-bold text-slate-800 mb-4">Withdraw Funds</h3>
+                            <form class="space-y-4" data-event="submit:handleWithdrawal">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-2">Amount (sats)</label>
+                                    <input type="number" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-bitcoin focus:border-transparent" placeholder="Enter amount" data-mock="true">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-2">Destination Address</label>
+                                    <textarea class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-bitcoin focus:border-transparent" rows="3" placeholder="Bitcoin address or Lightning invoice" data-mock="true"></textarea>
+                                </div>
+                                <button type="submit" class="w-full bg-gradient-to-r from-bitcoin to-lightning text-white py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity">
+                                    Request Withdrawal
+                                </button>
+                            </form>
+                        </div>
+                        
+                        <!-- Pending Withdrawals -->
+                        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                            <h3 class="text-lg font-bold text-slate-800 mb-4">Pending Withdrawals</h3>
+                            <div class="space-y-3">
+                                <!-- @STATE: withdrawalRequests:array = [] -->
+                                <div class="p-3 bg-yellow-50 border border-yellow-200 rounded-xl" data-mock="true">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-sm font-semibold text-slate-800">500 sats</span>
+                                        <span class="text-xs text-yellow-600 bg-yellow-100 px-2 py-1 rounded-full">Pending</span>
+                                    </div>
+                                    <p class="text-xs text-slate-500 mt-1">Requested 1 day ago</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: WalletPage -->
+
+        <!-- @COMPONENT: AdminDashboard [admin interface] -->
+        <div id="adminDashboard" class="hidden fixed inset-0 bg-slate-50 z-40 overflow-y-auto">
+            <div class="max-w-7xl mx-auto px-4 py-8">
+                <div class="flex items-center justify-between mb-8">
+                    <h1 class="text-3xl font-bold text-slate-800">Admin Dashboard</h1>
+                    <button class="text-slate-600 hover:text-slate-800" data-event="click:closeAdmin">
+                        <i class="fas fa-times text-2xl"></i>
+                    </button>
+                </div>
+                
+                <!-- Admin Navigation -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 mb-6">
+                    <nav class="flex space-x-8 px-6 py-4">
+                        <button class="text-bitcoin font-semibold border-b-2 border-bitcoin pb-2" data-event="click:showWithdrawals">
+                            Withdrawals
+                        </button>
+                        <button class="text-slate-600 hover:text-slate-800 font-semibold pb-2" data-event="click:showUsers">
+                            Users
+                        </button>
+                        <button class="text-slate-600 hover:text-slate-800 font-semibold pb-2" data-event="click:showPosts">
+                            Posts
+                        </button>
+                        <button class="text-slate-600 hover:text-slate-800 font-semibold pb-2" data-event="click:showAnalytics">
+                            Analytics
+                        </button>
+                    </nav>
+                </div>
+                
+                <!-- @COMPONENT: WithdrawalRequestsList [withdrawal management] -->
+                <div id="withdrawalsList" class="bg-white rounded-2xl shadow-sm border border-slate-200">
+                    <div class="p-6 border-b border-slate-200">
+                        <h2 class="text-xl font-bold text-slate-800">Pending Withdrawal Requests</h2>
+                        <p class="text-slate-600 text-sm mt-1">Review and approve user withdrawal requests</p>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-slate-50">
+                                <tr>
+                                    <th class="text-left py-3 px-6 font-semibold text-slate-700">User</th>
+                                    <th class="text-left py-3 px-6 font-semibold text-slate-700">Amount</th>
+                                    <th class="text-left py-3 px-6 font-semibold text-slate-700">Destination</th>
+                                    <th class="text-left py-3 px-6 font-semibold text-slate-700">Requested</th>
+                                    <th class="text-left py-3 px-6 font-semibold text-slate-700">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-200">
+                                <!-- @MAP: pendingWithdrawals.map(withdrawal => ( -->
+                                <tr data-mock="true">
+                                    <td class="py-4 px-6">
+                                        <div class="flex items-center space-x-3">
+                                            <!-- A profile photo of a cryptocurrency enthusiast -->
+                                            <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100" alt="User avatar" class="w-8 h-8 rounded-full">
+                                            <span class="font-semibold text-slate-800" data-bind="withdrawal.user.username">@cryptofan</span>
+                                        </div>
+                                    </td>
+                                    <td class="py-4 px-6 font-semibold text-slate-800" data-bind="withdrawal.amount">500 sats</td>
+                                    <td class="py-4 px-6">
+                                        <span class="text-sm text-slate-600 font-mono" data-bind="withdrawal.destination" data-mock="true">bc1q...abc123</span>
+                                    </td>
+                                    <td class="py-4 px-6 text-sm text-slate-500" data-bind="withdrawal.createdAt" data-mock="true">2 hours ago</td>
+                                    <td class="py-4 px-6">
+                                        <div class="flex space-x-2">
+                                            <button class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-sm font-semibold" data-event="click:approveWithdrawal" data-implementation="Should call /api/admin/withdrawal-requests/:id/approve">
+                                                Approve
+                                            </button>
+                                            <button class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-sm font-semibold" data-event="click:denyWithdrawal" data-implementation="Should call /api/admin/withdrawal-requests/:id/deny">
+                                                Deny
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                
+                                <tr data-mock="true">
+                                    <td class="py-4 px-6">
+                                        <div class="flex items-center space-x-3">
+                                            <!-- A portrait of a young female developer -->
+                                            <img src="https://pixabay.com/get/gacc3ba1bfc73bb2f8404d0e58086933b79c43d0fb542867b020c762755cefc66852255e2ec4a8fa97e13e0cf576917335928589813d0131f0b458ada330e8a60_1280.jpg" alt="User avatar" class="w-8 h-8 rounded-full">
+                                            <span class="font-semibold text-slate-800">@sarahtech</span>
+                                        </div>
+                                    </td>
+                                    <td class="py-4 px-6 font-semibold text-slate-800">1,000 sats</td>
+                                    <td class="py-4 px-6">
+                                        <span class="text-sm text-slate-600 font-mono" data-mock="true">lnbc1000...xyz789</span>
+                                    </td>
+                                    <td class="py-4 px-6 text-sm text-slate-500" data-mock="true">1 day ago</td>
+                                    <td class="py-4 px-6">
+                                        <div class="flex space-x-2">
+                                            <button class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-sm font-semibold">
+                                                Approve
+                                            </button>
+                                            <button class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-sm font-semibold">
+                                                Deny
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <!-- @END_MAP )) -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- User Management Section -->
+                <div id="usersList" class="hidden bg-white rounded-2xl shadow-sm border border-slate-200 mt-6">
+                    <div class="p-6 border-b border-slate-200">
+                        <h2 class="text-xl font-bold text-slate-800">User Management</h2>
+                        <p class="text-slate-600 text-sm mt-1">Manage user accounts and permissions</p>
+                    </div>
+                    
+                    <div class="p-6">
+                        <div class="flex items-center space-x-4 mb-6">
+                            <input type="text" placeholder="Search users..." class="flex-1 px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-bitcoin focus:border-transparent" data-mock="true">
+                            <button class="bg-bitcoin hover:bg-bitcoin-dark text-white px-4 py-2 rounded-xl font-semibold">
+                                Search
+                            </button>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-slate-50">
+                                    <tr>
+                                        <th class="text-left py-3 px-6 font-semibold text-slate-700">User</th>
+                                        <th class="text-left py-3 px-6 font-semibold text-slate-700">Email</th>
+                                        <th class="text-left py-3 px-6 font-semibold text-slate-700">Balance</th>
+                                        <th class="text-left py-3 px-6 font-semibold text-slate-700">Status</th>
+                                        <th class="text-left py-3 px-6 font-semibold text-slate-700">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-200">
+                                    <!-- @MAP: users.map(user => ( -->
+                                    <tr data-mock="true">
+                                        <td class="py-4 px-6">
+                                            <div class="flex items-center space-x-3">
+                                                <!-- A professional headshot of a content creator -->
+                                                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100" alt="User avatar" class="w-8 h-8 rounded-full">
+                                                <div>
+                                                    <p class="font-semibold text-slate-800" data-bind="user.username">@bitcoindev</p>
+                                                    <p class="text-sm text-slate-500" data-bind="user.joinDate" data-mock="true">Joined 3 months ago</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="py-4 px-6 text-slate-600" data-bind="user.email" data-mock="true">dev@example.com</td>
+                                        <td class="py-4 px-6 font-semibold text-slate-800" data-bind="user.balance" data-mock="true">2,450 sats</td>
+                                        <td class="py-4 px-6">
+                                            <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-semibold" data-bind="user.status">Active</span>
+                                        </td>
+                                        <td class="py-4 px-6">
+                                            <button class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-lg text-sm font-semibold" data-event="click:banUser" data-implementation="Should call /api/admin/users/:id/ban">
+                                                Ban User
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    
+                                    <tr data-mock="true">
+                                        <td class="py-4 px-6">
+                                            <div class="flex items-center space-x-3">
+                                                <!-- A portrait of a female tech entrepreneur -->
+                                                <img src="https://pixabay.com/get/gac9d7776e7271db136a171a2ce1df4e4d81fd2e8d496ca6b1f29468827e70ac5b68c6646d94c7dd29ceef1fe24cc3c67e3cd5d370ddce15ca9277d08d1b1c4c0_1280.jpg" alt="User avatar" class="w-8 h-8 rounded-full">
+                                                <div>
+                                                    <p class="font-semibold text-slate-800">@sarahtech</p>
+                                                    <p class="text-sm text-slate-500" data-mock="true">Joined 1 month ago</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="py-4 px-6 text-slate-600" data-mock="true">sarah@example.com</td>
+                                        <td class="py-4 px-6 font-semibold text-slate-800" data-mock="true">3,210 sats</td>
+                                        <td class="py-4 px-6">
+                                            <span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-semibold" data-mock="true">Banned</span>
+                                        </td>
+                                        <td class="py-4 px-6">
+                                            <button class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded-lg text-sm font-semibold" data-event="click:unbanUser">
+                                                Unban User
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <!-- @END_MAP )) -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: WithdrawalRequestsList -->
+            </div>
+        </div>
+        <!-- @END_COMPONENT: AdminDashboard -->
+
+        <!-- @COMPONENT: TipModal [tipping interface] -->
+        <div id="tipModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+                <div class="p-6">
+                    <div class="text-center mb-6">
+                        <div class="w-16 h-16 bg-gradient-to-br from-bitcoin to-lightning rounded-xl mx-auto mb-4 flex items-center justify-center">
+                            <i class="fas fa-bolt text-white text-2xl"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-slate-800">Send Sats Tip</h3>
+                        <p class="text-slate-600 mt-1">Support <span class="font-semibold" data-bind="tipRecipient.username" data-mock="true">@sarahtech</span></p>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <!-- Quick Tip Amounts -->
+                        <div class="grid grid-cols-3 gap-3">
+                            <button class="bg-slate-100 hover:bg-bitcoin hover:text-white text-slate-700 py-3 rounded-xl font-semibold transition-colors" data-event="click:selectTipAmount" data-amount="50">
+                                50 sats
+                            </button>
+                            <button class="bg-slate-100 hover:bg-bitcoin hover:text-white text-slate-700 py-3 rounded-xl font-semibold transition-colors" data-event="click:selectTipAmount" data-amount="100">
+                                100 sats
+                            </button>
+                            <button class="bg-slate-100 hover:bg-bitcoin hover:text-white text-slate-700 py-3 rounded-xl font-semibold transition-colors" data-event="click:selectTipAmount" data-amount="500">
+                                500 sats
+                            </button>
+                        </div>
+                        
+                        <!-- Custom Amount -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Custom Amount</label>
+                            <input type="number" class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-bitcoin focus:border-transparent" placeholder="Enter sats amount" data-mock="true">
+                        </div>
+                        
+                        <!-- Message -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Message (optional)</label>
+                            <textarea class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-bitcoin focus:border-transparent" rows="2" placeholder="Say something nice..." data-mock="true"></textarea>
+                        </div>
+                        
+                        <div class="flex space-x-3">
+                            <button class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 py-3 rounded-xl font-semibold transition-colors" data-event="click:closeTipModal">
+                                Cancel
+                            </button>
+                            <button class="flex-1 bg-gradient-to-r from-bitcoin to-lightning text-white py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity" data-event="click:sendTip" data-implementation="Should call /api/lightning/tip">
+                                Send Tip
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: TipModal -->
+
+        <!-- @COMPONENT: CreatePostModal [post creation interface] -->
+        <div id="createPostModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-xl font-bold text-slate-800">Create New Post</h3>
+                        <button class="text-slate-400 hover:text-slate-600" data-event="click:closeCreatePost">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    
+                    <form class="space-y-6" data-event="submit:handleCreatePost">
+                        <!-- Post Content -->
+                        <div>
+                            <textarea class="w-full px-4 py-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-bitcoin focus:border-transparent resize-none" rows="4" placeholder="What's on your mind?" data-mock="true"></textarea>
+                        </div>
+                        
+                        <!-- Media Upload -->
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">Add Media</label>
+                            <div class="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center hover:border-bitcoin transition-colors cursor-pointer" data-implementation="Use FileUpload component here">
+                                <i class="fas fa-cloud-upload-alt text-slate-400 text-3xl mb-3"></i>
+                                <p class="text-slate-600 font-semibold">Drag & drop files here</p>
+                                <p class="text-slate-500 text-sm">or click to browse</p>
+                                <input type="file" class="hidden" accept="image/*,video/*" multiple data-mock="true">
+                            </div>
+                        </div>
+                        
+                        <!-- Post Options -->
+                        <div class="space-y-3">
+                            <div class="flex items-center space-x-3">
+                                <input type="checkbox" id="enableTips" class="w-4 h-4 text-bitcoin bg-slate-100 border-slate-300 rounded focus:ring-bitcoin" data-mock="true">
+                                <label for="enableTips" class="text-sm font-medium text-slate-700">Enable Bitcoin tips for this post</label>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <input type="checkbox" id="scheduledPost" class="w-4 h-4 text-bitcoin bg-slate-100 border-slate-300 rounded focus:ring-bitcoin" data-mock="true">
+                                <label for="scheduledPost" class="text-sm font-medium text-slate-700">Schedule this post</label>
+                            </div>
+                        </div>
+                        
+                        <div class="flex space-x-3">
+                            <button type="button" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 py-3 rounded-xl font-semibold transition-colors" data-event="click:closeCreatePost">
+                                Cancel
+                            </button>
+                            <button type="submit" class="flex-1 bg-gradient-to-r from-bitcoin to-lightning text-white py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity" data-implementation="Should call /api/posts/upload">
+                                Publish Post
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: CreatePostModal -->
+
+        <!-- Floating Action Button for Mobile -->
+        <div class="fixed bottom-6 right-6 lg:hidden">
+            <button class="w-14 h-14 bg-gradient-to-r from-bitcoin to-lightning text-white rounded-full shadow-lg flex items-center justify-center" data-event="click:openCreatePost">
+                <i class="fas fa-plus text-xl"></i>
+            </button>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: App -->
+
+    <script>
+        // TODO: Implement business logic, API calls, and state management
+        (function() {
+            // Modal management
+            const modals = {
+                auth: document.getElementById('authModal'),
+                livestream: document.getElementById('livestreamModal'),
+                wallet: document.getElementById('walletPage'),
+                admin: document.getElementById('adminDashboard'),
+                tip: document.getElementById('tipModal'),
+                createPost: document.getElementById('createPostModal')
+            };
+
+            // Show/hide modal functions
+            function showModal(modalName) {
+                if (modals[modalName]) {
+                    modals[modalName].classList.remove('hidden');
+                    document.body.style.overflow = 'hidden';
+                }
+            }
+
+            function hideModal(modalName) {
+                if (modals[modalName]) {
+                    modals[modalName].classList.add('hidden');
+                    document.body.style.overflow = 'auto';
+                }
+            }
+
+            // Demo event handlers
+            document.addEventListener('click', function(e) {
+                // Modal triggers
+                if (e.target.closest('[data-event*="openCreatePost"]')) {
+                    e.preventDefault();
+                    showModal('createPost');
+                }
+                if (e.target.closest('[data-event*="openLiveStream"]')) {
+                    e.preventDefault();
+                    showModal('livestream');
+                }
+                if (e.target.closest('[data-event*="tipCreator"]')) {
+                    e.preventDefault();
+                    showModal('tip');
+                }
+                
+                // Close modal triggers
+                if (e.target.closest('[data-event*="closeCreatePost"]')) {
+                    e.preventDefault();
+                    hideModal('createPost');
+                }
+                if (e.target.closest('[data-event*="closeLiveStream"]')) {
+                    e.preventDefault();
+                    hideModal('livestream');
+                }
+                if (e.target.closest('[data-event*="closeTipModal"]')) {
+                    e.preventDefault();
+                    hideModal('tip');
+                }
+                if (e.target.closest('[data-event*="closeWallet"]')) {
+                    e.preventDefault();
+                    hideModal('wallet');
+                }
+                if (e.target.closest('[data-event*="closeAdmin"]')) {
+                    e.preventDefault();
+                    hideModal('admin');
+                }
+
+                // Navigation
+                if (e.target.closest('[href="#"]')) {
+                    e.preventDefault();
+                }
+            });
+
+            // Demo admin navigation
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('[data-event*="showWithdrawals"]')) {
+                    document.getElementById('withdrawalsList').classList.remove('hidden');
+                    document.getElementById('usersList').classList.add('hidden');
+                }
+                if (e.target.closest('[data-event*="showUsers"]')) {
+                    document.getElementById('withdrawalsList').classList.add('hidden');
+                    document.getElementById('usersList').classList.remove('hidden');
+                }
+            });
+
+            // Demo live reactions
+            function addLiveReaction() {
+                const reactions = document.getElementById('liveReactions');
+                if (reactions) {
+                    const reaction = document.createElement('div');
+                    reaction.className = 'bg-bitcoin/90 text-white px-3 py-1 rounded-full text-sm animate-pulse';
+                    reaction.innerHTML = '<i class="fas fa-bolt mr-1"></i>+' + (Math.floor(Math.random() * 500) + 10) + ' sats';
+                    reactions.appendChild(reaction);
+                    
+                    setTimeout(() => {
+                        reaction.remove();
+                    }, 3000);
+                }
+            }
+
+            // Simulate live reactions every few seconds
+            setInterval(addLiveReaction, 4000);
+
+            // Initialize demo
+            console.log('SatStream - Bitcoin Social Media Platform Demo Loaded');
+        })();
+    </script>
+</body>
+</html>

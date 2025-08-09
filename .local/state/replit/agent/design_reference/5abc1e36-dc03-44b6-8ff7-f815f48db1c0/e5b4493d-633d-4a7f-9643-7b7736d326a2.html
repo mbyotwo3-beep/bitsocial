@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SatStream - Bitcoin Social Media Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        bitcoin: '#F7931A',
+                        lightning: '#FFD700',
+                        dark: '#121212',
+                        'dark-card': '#1E1E1E',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        };
+    </script>
+    <style>
+        .bitcoin-gradient {
+            background: linear-gradient(135deg, #F7931A 0%, #FFD700 100%);
+        }
+        .glass-effect {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .reaction-bounce {
+            animation: bounce 0.5s ease-in-out;
+        }
+        @keyframes bounce {
+            0%, 20%, 60%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            80% { transform: translateY(-5px); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50 dark:bg-dark font-sans">
+    <!-- @COMPONENT: App -->
+    <div id="app" class="min-h-screen">
+        <!-- @COMPONENT: Header -->
+        <header class="bg-white dark:bg-dark-card border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
+                    <!-- Logo -->
+                    <div class="flex items-center space-x-2">
+                        <div class="w-8 h-8 bitcoin-gradient rounded-lg flex items-center justify-center">
+                            <i data-lucide="zap" class="w-5 h-5 text-white"></i>
+                        </div>
+                        <span class="text-xl font-bold text-gray-900 dark:text-white">SatStream</span>
+                    </div>
+
+                    <!-- Navigation -->
+                    <nav class="hidden md:flex space-x-6">
+                        <a href="#feed" class="text-gray-600 dark:text-gray-300 hover:text-bitcoin transition-colors">Feed</a>
+                        <a href="#live" class="text-gray-600 dark:text-gray-300 hover:text-bitcoin transition-colors">Live</a>
+                        <a href="#discover" class="text-gray-600 dark:text-gray-300 hover:text-bitcoin transition-colors">Discover</a>
+                    </nav>
+
+                    <!-- User Section -->
+                    <div class="flex items-center space-x-4">
+                        <!-- @STATE: walletBalance:number = 25000 -->
+                        <div class="hidden sm:flex items-center space-x-2 bg-bitcoin/10 px-3 py-1 rounded-full">
+                            <i data-lucide="bitcoin" class="w-4 h-4 text-bitcoin"></i>
+                            <span class="text-sm font-medium text-bitcoin" data-bind="user.balance">25,000 sats</span>
+                        </div>
+                        
+                        <!-- Profile -->
+                        <div class="flex items-center space-x-2">
+                            <!-- User profile image with circular crop to handle non-square images -->
+                            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100" 
+                                 alt="User profile" 
+                                 class="w-8 h-8 rounded-full object-cover" 
+                                 data-mock="true" />
+                            <span class="hidden sm:block text-sm font-medium text-gray-900 dark:text-white" data-bind="user.username">alex_btc</span>
+                        </div>
+
+                        <!-- Notifications -->
+                        <button class="relative p-2 text-gray-600 dark:text-gray-300 hover:text-bitcoin transition-colors">
+                            <i data-lucide="bell" class="w-5 h-5"></i>
+                            <span class="absolute -top-1 -right-1 w-2 h-2 bg-bitcoin rounded-full"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+        <!-- @END_COMPONENT: Header -->
+
+        <div class="flex max-w-7xl mx-auto">
+            <!-- @COMPONENT: Sidebar -->
+            <aside class="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 lg:pt-16 lg:border-r lg:border-gray-200 dark:lg:border-gray-700">
+                <div class="flex-1 flex flex-col min-h-0 bg-white dark:bg-dark-card">
+                    <div class="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
+                        <nav class="mt-5 flex-1 px-2 space-y-1">
+                            <!-- Main Navigation -->
+                            <a href="#feed" class="bg-bitcoin/10 text-bitcoin group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                                <i data-lucide="home" class="mr-3 h-5 w-5"></i>
+                                Home Feed
+                            </a>
+                            <a href="#live" class="text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                                <i data-lucide="radio" class="mr-3 h-5 w-5"></i>
+                                Live Streams
+                            </a>
+                            <a href="#wallet" class="text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                                <i data-lucide="wallet" class="mr-3 h-5 w-5"></i>
+                                Wallet
+                            </a>
+                            <a href="#profile" class="text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                                <i data-lucide="user" class="mr-3 h-5 w-5"></i>
+                                Profile
+                            </a>
+                            
+                            <!-- Admin Section (conditional rendering) -->
+                            <!-- @STATE: isAdmin:boolean = true -->
+                            <div class="pt-4 mt-4 border-t border-gray-200 dark:border-gray-700" data-admin-only="true">
+                                <p class="px-2 text-xs font-semibold text-gray-400 uppercase tracking-wide">Admin</p>
+                                <a href="#admin" class="mt-1 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white group flex items-center px-2 py-2 text-sm font-medium rounded-md">
+                                    <i data-lucide="shield" class="mr-3 h-5 w-5"></i>
+                                    Dashboard
+                                    <span class="ml-auto bg-red-500 text-white text-xs px-2 py-1 rounded-full">3</span>
+                                </a>
+                            </div>
+                        </nav>
+                    </div>
+                </div>
+            </aside>
+            <!-- @END_COMPONENT: Sidebar -->
+
+            <!-- @COMPONENT: MainContent -->
+            <main class="flex-1 lg:pl-64 pb-20">
+                <div class="px-4 sm:px-6 lg:px-8 py-6">
+                    
+                    <!-- @COMPONENT: ContentFeed -->
+                    <div class="max-w-2xl mx-auto space-y-6" id="main-feed">
+                        
+                        <!-- Create Post Component -->
+                        <!-- @COMPONENT: CreatePost -->
+                        <div class="bg-white dark:bg-dark-card rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                            <div class="flex items-center space-x-3">
+                                <!-- User profile image for post creation -->
+                                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100" 
+                                     alt="Your profile" 
+                                     class="w-10 h-10 rounded-full object-cover" 
+                                     data-mock="true" />
+                                <div class="flex-1">
+                                    <textarea placeholder="Share something with the community..." 
+                                              class="w-full p-3 border border-gray-200 dark:border-gray-600 rounded-lg resize-none focus:ring-2 focus:ring-bitcoin focus:border-transparent dark:bg-gray-800 dark:text-white"
+                                              rows="3" data-implementation="Should handle post creation with media upload"></textarea>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center mt-4">
+                                <div class="flex space-x-2">
+                                    <button class="flex items-center space-x-2 px-3 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors" data-event="click:uploadImage">
+                                        <i data-lucide="image" class="w-4 h-4"></i>
+                                        <span class="text-sm">Photo</span>
+                                    </button>
+                                    <button class="flex items-center space-x-2 px-3 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors" data-event="click:uploadVideo">
+                                        <i data-lucide="video" class="w-4 h-4"></i>
+                                        <span class="text-sm">Video</span>
+                                    </button>
+                                    <button class="flex items-center space-x-2 px-3 py-2 text-bitcoin hover:bg-bitcoin/10 rounded-lg transition-colors" data-event="click:startLivestream">
+                                        <i data-lucide="radio" class="w-4 h-4"></i>
+                                        <span class="text-sm font-medium">Go Live</span>
+                                    </button>
+                                </div>
+                                <button class="bg-bitcoin hover:bg-bitcoin/90 text-white px-6 py-2 rounded-lg font-medium transition-colors" data-event="click:createPost">
+                                    Post
+                                </button>
+                            </div>
+                        </div>
+                        <!-- @END_COMPONENT: CreatePost -->
+
+                        <!-- Live Stream Featured -->
+                        <!-- @COMPONENT: LiveStreamCard -->
+                        <div class="bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl shadow-sm p-1">
+                            <div class="bg-white dark:bg-dark-card rounded-lg p-6">
+                                <div class="flex items-center justify-between mb-4">
+                                    <div class="flex items-center space-x-2">
+                                        <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                                        <span class="text-sm font-semibold text-red-500">LIVE NOW</span>
+                                    </div>
+                                    <span class="text-sm text-gray-500 dark:text-gray-400">1,234 viewers</span>
+                                </div>
+                                
+                                <!-- Live stream thumbnail/preview -->
+                                <div class="relative mb-4">
+                                    <!-- Gaming livestream scene with colorful lighting -->
+                                    <img src="https://images.unsplash.com/photo-1542751371-adc38448a05e?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&h=400" 
+                                         alt="Gaming livestream with colorful RGB lighting setup" 
+                                         class="w-full h-48 object-cover rounded-lg" />
+                                    <div class="absolute bottom-3 left-3 flex items-center space-x-2">
+                                        <!-- Livestreamer profile image -->
+                                        <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100" 
+                                             alt="Gaming streamer profile" 
+                                             class="w-8 h-8 rounded-full object-cover border-2 border-white" 
+                                             data-mock="true" />
+                                        <span class="text-white font-medium text-sm" data-bind="livestream.author">crypto_gamer</span>
+                                    </div>
+                                    <div class="absolute top-3 right-3 bg-black/50 text-white px-2 py-1 rounded text-sm">
+                                        ⚡ 450 sats/min
+                                    </div>
+                                </div>
+                                
+                                <h3 class="font-semibold text-gray-900 dark:text-white mb-2" data-bind="livestream.title">Bitcoin Trading Strategy Live - Q&A Session</h3>
+                                <p class="text-gray-600 dark:text-gray-300 text-sm mb-4">Join the discussion about Lightning Network adoption and answer questions to earn sats!</p>
+                                
+                                <button class="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 rounded-lg font-medium hover:opacity-90 transition-opacity" data-event="click:joinLivestream">
+                                    Join Stream
+                                </button>
+                            </div>
+                        </div>
+                        <!-- @END_COMPONENT: LiveStreamCard -->
+
+                        <!-- Posts Feed -->
+                        <!-- @MAP: posts.map(post => ( -->
+                        <!-- @COMPONENT: Post -->
+                        <article class="bg-white dark:bg-dark-card rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                            <!-- Post Header -->
+                            <div class="p-6 pb-4">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-3">
+                                        <!-- Post author profile image -->
+                                        <img src="https://pixabay.com/get/gd351db936892fae5fed9bde216b50b02baae6a926e8a923b1e64e28a93932cd3a25c50a2b9862c31662033d31d76b228882dae4d670cc139cc9e3a869c863aa9_1280.jpg" 
+                                             alt="Post author profile" 
+                                             class="w-10 h-10 rounded-full object-cover" 
+                                             data-mock="true" />
+                                        <div>
+                                            <h4 class="font-medium text-gray-900 dark:text-white" data-bind="post.author.username">sarah_hodl</h4>
+                                            <p class="text-sm text-gray-500 dark:text-gray-400" data-bind="post.createdAt">2 hours ago</p>
+                                        </div>
+                                    </div>
+                                    <button class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                                        <i data-lucide="more-horizontal" class="w-5 h-5"></i>
+                                    </button>
+                                </div>
+                                
+                                <!-- Post Content -->
+                                <div class="mt-4">
+                                    <p class="text-gray-900 dark:text-white" data-bind="post.text" data-mock="true">
+                                        Just set up my first Lightning node! 🚀 The future of Bitcoin payments is incredibly fast. 
+                                        Who else is running a node? Would love to connect and share experiences. #LightningNetwork #Bitcoin
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Post Image -->
+                            <!-- Bitcoin Lightning node setup with cables and hardware -->
+                            <img src="https://images.unsplash.com/photo-1518546305927-5a555bb7020d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&h=600" 
+                                 alt="Bitcoin Lightning node hardware setup with cables and blinking LEDs" 
+                                 class="w-full h-64 object-cover" 
+                                 data-bind="post.contentUrl" />
+
+                            <!-- Post Actions -->
+                            <div class="p-6 pt-4">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-4">
+                                        <!-- Like Button -->
+                                        <button class="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-red-500 transition-colors" data-event="click:likePost">
+                                            <i data-lucide="heart" class="w-5 h-5"></i>
+                                            <span class="text-sm" data-bind="post.likes">42</span>
+                                        </button>
+                                        
+                                        <!-- Comments -->
+                                        <button class="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-blue-500 transition-colors" data-event="click:showComments">
+                                            <i data-lucide="message-circle" class="w-5 h-5"></i>
+                                            <span class="text-sm" data-bind="post.comments">12</span>
+                                        </button>
+                                        
+                                        <!-- Share -->
+                                        <button class="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-green-500 transition-colors" data-event="click:sharePost">
+                                            <i data-lucide="share" class="w-5 h-5"></i>
+                                            <span class="text-sm">Share</span>
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Tip Button -->
+                                    <button class="flex items-center space-x-2 bg-bitcoin/10 hover:bg-bitcoin/20 text-bitcoin px-4 py-2 rounded-lg transition-colors" data-event="click:tipUser" data-implementation="Should open tip modal with amount selection">
+                                        <i data-lucide="zap" class="w-4 h-4"></i>
+                                        <span class="text-sm font-medium">Tip Sats</span>
+                                    </button>
+                                </div>
+                                
+                                <!-- Tip Counter -->
+                                <div class="mt-3 text-sm text-gray-500 dark:text-gray-400">
+                                    <span data-bind="post.totalTips">156 sats</span> tipped by <span data-bind="post.tipperCount">8</span> users
+                                </div>
+                            </div>
+                        </article>
+                        <!-- @END_COMPONENT: Post -->
+                        <!-- @END_MAP )) -->
+
+                        <!-- Another Post Example -->
+                        <!-- @COMPONENT: Post -->
+                        <article class="bg-white dark:bg-dark-card rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+                            <div class="p-6 pb-4">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-3">
+                                        <!-- Different user profile -->
+                                        <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100" 
+                                             alt="Post author profile" 
+                                             class="w-10 h-10 rounded-full object-cover" 
+                                             data-mock="true" />
+                                        <div>
+                                            <h4 class="font-medium text-gray-900 dark:text-white" data-bind="post.author.username">bitcoiner_dev</h4>
+                                            <p class="text-sm text-gray-500 dark:text-gray-400" data-bind="post.createdAt">4 hours ago</p>
+                                        </div>
+                                    </div>
+                                    <button class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                                        <i data-lucide="more-horizontal" class="w-5 h-5"></i>
+                                    </button>
+                                </div>
+                                
+                                <div class="mt-4">
+                                    <p class="text-gray-900 dark:text-white" data-bind="post.text" data-mock="true">
+                                        Building with the Lightning Network has been an amazing journey. Here's my latest project - 
+                                        a simple payment widget that processes microtips in real-time. The instant settlements blow my mind every time! 🔥⚡
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Code screenshot or development workspace -->
+                            <img src="https://images.unsplash.com/photo-1461749280684-dccba630e2f6?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&h=600" 
+                                 alt="Developer workspace with multiple monitors showing code and Lightning Network payment interfaces" 
+                                 class="w-full h-64 object-cover" 
+                                 data-bind="post.contentUrl" />
+
+                            <div class="p-6 pt-4">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-4">
+                                        <button class="flex items-center space-x-2 text-red-500" data-event="click:likePost">
+                                            <i data-lucide="heart" class="w-5 h-5 fill-current"></i>
+                                            <span class="text-sm" data-bind="post.likes">89</span>
+                                        </button>
+                                        <button class="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-blue-500 transition-colors" data-event="click:showComments">
+                                            <i data-lucide="message-circle" class="w-5 h-5"></i>
+                                            <span class="text-sm" data-bind="post.comments">23</span>
+                                        </button>
+                                        <button class="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-green-500 transition-colors" data-event="click:sharePost">
+                                            <i data-lucide="share" class="w-5 h-5"></i>
+                                            <span class="text-sm">Share</span>
+                                        </button>
+                                    </div>
+                                    
+                                    <button class="flex items-center space-x-2 bg-bitcoin/10 hover:bg-bitcoin/20 text-bitcoin px-4 py-2 rounded-lg transition-colors" data-event="click:tipUser">
+                                        <i data-lucide="zap" class="w-4 h-4"></i>
+                                        <span class="text-sm font-medium">Tip Sats</span>
+                                    </button>
+                                </div>
+                                
+                                <div class="mt-3 text-sm text-gray-500 dark:text-gray-400">
+                                    <span data-bind="post.totalTips">1,230 sats</span> tipped by <span data-bind="post.tipperCount">15</span> users
+                                </div>
+                            </div>
+                        </article>
+                        <!-- @END_COMPONENT: Post -->
+                    </div>
+                    <!-- @END_COMPONENT: ContentFeed -->
+                </div>
+            </main>
+            <!-- @END_COMPONENT: MainContent -->
+        </div>
+
+        <!-- @COMPONENT: TipModal -->
+        <div id="tipModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden" data-modal="tip">
+            <div class="flex items-center justify-center min-h-screen p-4">
+                <div class="bg-white dark:bg-dark-card rounded-xl shadow-xl max-w-md w-full p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Send Tip</h3>
+                        <button class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200" data-event="click:closeTipModal">
+                            <i data-lucide="x" class="w-5 h-5"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="text-center mb-6">
+                        <!-- Recipient profile -->
+                        <img src="https://pixabay.com/get/gd292eb5c91fab9d5b2a217bff8bac93c12a589b3cb1c00c4ee725c61893a8d04bb52e5550b40549d7ac9ccde49a6f90d9de547efe84e8c8c9ab4ec83a4b61596_1280.jpg" 
+                             alt="Tip recipient" 
+                             class="w-16 h-16 rounded-full object-cover mx-auto mb-3" 
+                             data-mock="true" />
+                        <p class="text-gray-600 dark:text-gray-300">Sending tip to</p>
+                        <p class="font-semibold text-gray-900 dark:text-white" data-bind="tipRecipient.username">sarah_hodl</p>
+                    </div>
+
+                    <!-- Tip Amount Selection -->
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-3 gap-3">
+                            <button class="p-3 border border-gray-200 dark:border-gray-600 rounded-lg hover:border-bitcoin transition-colors text-center" data-event="click:selectTipAmount" data-amount="100">
+                                <div class="text-lg font-semibold text-gray-900 dark:text-white">100</div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400">sats</div>
+                            </button>
+                            <button class="p-3 border border-gray-200 dark:border-gray-600 rounded-lg hover:border-bitcoin transition-colors text-center" data-event="click:selectTipAmount" data-amount="500">
+                                <div class="text-lg font-semibold text-gray-900 dark:text-white">500</div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400">sats</div>
+                            </button>
+                            <button class="p-3 border border-gray-200 dark:border-gray-600 rounded-lg hover:border-bitcoin transition-colors text-center" data-event="click:selectTipAmount" data-amount="1000">
+                                <div class="text-lg font-semibold text-gray-900 dark:text-white">1,000</div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400">sats</div>
+                            </button>
+                        </div>
+                        
+                        <!-- Custom Amount -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Custom Amount</label>
+                            <div class="relative">
+                                <input type="number" placeholder="Enter sats amount" 
+                                       class="w-full p-3 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-bitcoin focus:border-transparent dark:bg-gray-800 dark:text-white"
+                                       data-bind="customTipAmount" />
+                                <span class="absolute right-3 top-3 text-gray-500 dark:text-gray-400">sats</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Send Button -->
+                    <button class="w-full bg-bitcoin hover:bg-bitcoin/90 text-white py-3 rounded-lg font-medium mt-6 transition-colors" data-event="click:sendTip" data-implementation="Should call Lightning payment API">
+                        <i data-lucide="zap" class="w-4 h-4 inline mr-2"></i>
+                        Send Tip
+                    </button>
+                    
+                    <p class="text-xs text-gray-500 dark:text-gray-400 text-center mt-3">
+                        Tips are sent instantly via Lightning Network
+                    </p>
+                </div>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: TipModal -->
+
+        <!-- @COMPONENT: AdminDashboard -->
+        <div id="adminDashboard" class="hidden fixed inset-0 bg-gray-50 dark:bg-dark z-50 overflow-y-auto">
+            <div class="min-h-screen">
+                <!-- Admin Header -->
+                <header class="bg-white dark:bg-dark-card border-b border-gray-200 dark:border-gray-700">
+                    <div class="px-6 py-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <button class="lg:hidden text-gray-600 dark:text-gray-300" data-event="click:closeAdminDashboard">
+                                    <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                                </button>
+                                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
+                            </div>
+                            <div class="flex items-center space-x-4">
+                                <div class="text-sm text-gray-600 dark:text-gray-300">
+                                    <span class="font-medium">Platform Balance:</span>
+                                    <span class="text-bitcoin font-semibold ml-1" data-bind="platform.balance">1,250,000 sats</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="flex">
+                    <!-- Admin Sidebar -->
+                    <aside class="w-64 bg-white dark:bg-dark-card border-r border-gray-200 dark:border-gray-700 min-h-screen">
+                        <nav class="p-4 space-y-2">
+                            <a href="#overview" class="block px-3 py-2 bg-bitcoin/10 text-bitcoin rounded-lg font-medium">
+                                <i data-lucide="bar-chart" class="w-4 h-4 inline mr-2"></i>
+                                Overview
+                            </a>
+                            <a href="#withdrawals" class="block px-3 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+                                <i data-lucide="credit-card" class="w-4 h-4 inline mr-2"></i>
+                                Withdrawal Requests
+                                <span class="bg-red-500 text-white text-xs px-2 py-1 rounded-full ml-2">3</span>
+                            </a>
+                            <a href="#users" class="block px-3 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+                                <i data-lucide="users" class="w-4 h-4 inline mr-2"></i>
+                                User Management
+                            </a>
+                            <a href="#content" class="block px-3 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+                                <i data-lucide="flag" class="w-4 h-4 inline mr-2"></i>
+                                Content Moderation
+                            </a>
+                            <a href="#analytics" class="block px-3 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">
+                                <i data-lucide="trending-up" class="w-4 h-4 inline mr-2"></i>
+                                Analytics
+                            </a>
+                        </nav>
+                    </aside>
+
+                    <!-- Admin Content -->
+                    <main class="flex-1 p-6">
+                        <!-- Overview Stats -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                            <div class="bg-white dark:bg-dark-card p-6 rounded-xl border border-gray-200 dark:border-gray-700">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">Total Users</p>
+                                        <p class="text-2xl font-bold text-gray-900 dark:text-white" data-bind="stats.totalUsers">2,847</p>
+                                    </div>
+                                    <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
+                                        <i data-lucide="users" class="w-6 h-6 text-blue-600 dark:text-blue-400"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white dark:bg-dark-card p-6 rounded-xl border border-gray-200 dark:border-gray-700">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">Active Streams</p>
+                                        <p class="text-2xl font-bold text-gray-900 dark:text-white" data-bind="stats.activeStreams">12</p>
+                                    </div>
+                                    <div class="w-12 h-12 bg-purple-100 dark:bg-purple-900/20 rounded-lg flex items-center justify-center">
+                                        <i data-lucide="radio" class="w-6 h-6 text-purple-600 dark:text-purple-400"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white dark:bg-dark-card p-6 rounded-xl border border-gray-200 dark:border-gray-700">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">Daily Tips</p>
+                                        <p class="text-2xl font-bold text-gray-900 dark:text-white" data-bind="stats.dailyTips">45,600 sats</p>
+                                    </div>
+                                    <div class="w-12 h-12 bg-bitcoin/10 rounded-lg flex items-center justify-center">
+                                        <i data-lucide="zap" class="w-6 h-6 text-bitcoin"></i>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="bg-white dark:bg-dark-card p-6 rounded-xl border border-gray-200 dark:border-gray-700">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm text-gray-600 dark:text-gray-400">Pending Requests</p>
+                                        <p class="text-2xl font-bold text-gray-900 dark:text-white" data-bind="stats.pendingRequests">3</p>
+                                    </div>
+                                    <div class="w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-lg flex items-center justify-center">
+                                        <i data-lucide="clock" class="w-6 h-6 text-red-600 dark:text-red-400"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- @COMPONENT: WithdrawalRequestsList -->
+                        <div class="bg-white dark:bg-dark-card rounded-xl border border-gray-200 dark:border-gray-700">
+                            <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                                <h2 class="text-lg font-semibold text-gray-900 dark:text-white">Withdrawal Requests</h2>
+                                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Review and approve user withdrawal requests</p>
+                            </div>
+                            
+                            <div class="overflow-x-auto">
+                                <table class="w-full">
+                                    <thead class="bg-gray-50 dark:bg-gray-800">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">User</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Amount</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Destination</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Requested</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+                                        <!-- @MAP: withdrawalRequests.map(request => ( -->
+                                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="flex items-center">
+                                                    <!-- User requesting withdrawal -->
+                                                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100" 
+                                                         alt="User requesting withdrawal" 
+                                                         class="w-8 h-8 rounded-full object-cover" 
+                                                         data-mock="true" />
+                                                    <div class="ml-3">
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white" data-bind="request.user.username">alex_btc</p>
+                                                        <p class="text-sm text-gray-500 dark:text-gray-400" data-bind="request.user.email">alex@example.com</p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="text-sm font-medium text-gray-900 dark:text-white" data-bind="request.amount">25,000 sats</span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="text-sm text-gray-500 dark:text-gray-400 font-mono" data-bind="request.destinationAddress">bc1q...7x8y</span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="text-sm text-gray-500 dark:text-gray-400" data-bind="request.createdAt">2 hours ago</span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap space-x-2">
+                                                <button class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm transition-colors" data-event="click:approveWithdrawal" data-implementation="Should call Breez SDK sendOnchain">
+                                                    Approve
+                                                </button>
+                                                <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm transition-colors" data-event="click:denyWithdrawal">
+                                                    Deny
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        
+                                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <div class="flex items-center">
+                                                    <!-- Another user -->
+                                                    <img src="https://pixabay.com/get/gf821431c878160f87048c8c76c6008d46a88ea9afbaccfe2f89ae4fb19ecf17d9200463c4db9ea110d1f5dd7bb205e321aed4df3a8090aadbf5f8b8d5ea2942c_1280.jpg" 
+                                                         alt="User requesting withdrawal" 
+                                                         class="w-8 h-8 rounded-full object-cover" 
+                                                         data-mock="true" />
+                                                    <div class="ml-3">
+                                                        <p class="text-sm font-medium text-gray-900 dark:text-white" data-bind="request.user.username">sarah_hodl</p>
+                                                        <p class="text-sm text-gray-500 dark:text-gray-400" data-bind="request.user.email">sarah@example.com</p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="text-sm font-medium text-gray-900 dark:text-white" data-bind="request.amount">50,000 sats</span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="text-sm text-gray-500 dark:text-gray-400 font-mono" data-bind="request.destinationAddress">lnbc50u1p...</span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap">
+                                                <span class="text-sm text-gray-500 dark:text-gray-400" data-bind="request.createdAt">4 hours ago</span>
+                                            </td>
+                                            <td class="px-6 py-4 whitespace-nowrap space-x-2">
+                                                <button class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded text-sm transition-colors" data-event="click:approveWithdrawal">
+                                                    Approve
+                                                </button>
+                                                <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-sm transition-colors" data-event="click:denyWithdrawal">
+                                                    Deny
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        <!-- @END_MAP )) -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <!-- @END_COMPONENT: WithdrawalRequestsList -->
+                    </main>
+                </div>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: AdminDashboard -->
+
+        <!-- @COMPONENT: WalletPage -->
+        <div id="walletPage" class="hidden fixed inset-0 bg-gray-50 dark:bg-dark z-50 overflow-y-auto">
+            <div class="min-h-screen">
+                <header class="bg-white dark:bg-dark-card border-b border-gray-200 dark:border-gray-700">
+                    <div class="px-6 py-4">
+                        <div class="flex items-center space-x-3">
+                            <button class="text-gray-600 dark:text-gray-300" data-event="click:closeWallet">
+                                <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                            </button>
+                            <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Wallet</h1>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="max-w-2xl mx-auto p-6 space-y-6">
+                    <!-- Balance Card -->
+                    <div class="bg-gradient-to-r from-bitcoin to-lightning rounded-xl p-6 text-white">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-white/80 text-sm">Your Balance</p>
+                                <p class="text-3xl font-bold" data-bind="user.balance">25,000 sats</p>
+                                <p class="text-white/60 text-sm mt-1">≈ $6.25 USD</p>
+                            </div>
+                            <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
+                                <i data-lucide="wallet" class="w-8 h-8"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <button class="bg-white dark:bg-dark-card p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-bitcoin transition-colors">
+                            <div class="text-center">
+                                <div class="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                                    <i data-lucide="arrow-down-left" class="w-6 h-6 text-green-600 dark:text-green-400"></i>
+                                </div>
+                                <p class="font-medium text-gray-900 dark:text-white">Receive</p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Get Lightning invoice</p>
+                            </div>
+                        </button>
+                        
+                        <button class="bg-white dark:bg-dark-card p-4 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-bitcoin transition-colors" data-event="click:showWithdrawForm">
+                            <div class="text-center">
+                                <div class="w-12 h-12 bg-bitcoin/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                                    <i data-lucide="arrow-up-right" class="w-6 h-6 text-bitcoin"></i>
+                                </div>
+                                <p class="font-medium text-gray-900 dark:text-white">Withdraw</p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Send to external wallet</p>
+                            </div>
+                        </button>
+                    </div>
+
+                    <!-- Withdraw Form -->
+                    <div id="withdrawForm" class="bg-white dark:bg-dark-card rounded-xl border border-gray-200 dark:border-gray-700 p-6 hidden">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Withdraw Funds</h3>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Destination Address</label>
+                                <input type="text" placeholder="Bitcoin address or Lightning invoice" 
+                                       class="w-full p-3 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-bitcoin focus:border-transparent dark:bg-gray-800 dark:text-white"
+                                       data-bind="withdrawForm.destinationAddress" />
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Amount (sats)</label>
+                                <input type="number" placeholder="Enter amount to withdraw" 
+                                       class="w-full p-3 border border-gray-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-bitcoin focus:border-transparent dark:bg-gray-800 dark:text-white"
+                                       data-bind="withdrawForm.amount" />
+                            </div>
+                            
+                            <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                                <div class="flex">
+                                    <i data-lucide="info" class="w-5 h-5 text-yellow-600 dark:text-yellow-400 mr-2 mt-0.5"></i>
+                                    <div class="text-sm text-yellow-800 dark:text-yellow-200">
+                                        <p class="font-medium">Withdrawal Process</p>
+                                        <p>Your withdrawal request will be reviewed by admins. Processing typically takes 2-24 hours.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <button class="w-full bg-bitcoin hover:bg-bitcoin/90 text-white py-3 rounded-lg font-medium transition-colors" data-event="click:submitWithdrawalRequest" data-implementation="Should call /api/lightning/withdraw-request endpoint">
+                                Submit Withdrawal Request
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Transaction History -->
+                    <div class="bg-white dark:bg-dark-card rounded-xl border border-gray-200 dark:border-gray-700">
+                        <div class="p-6 border-b border-gray-200 dark:border-gray-700">
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Recent Activity</h3>
+                        </div>
+                        
+                        <div class="divide-y divide-gray-200 dark:divide-gray-700">
+                            <!-- @MAP: transactions.map(transaction => ( -->
+                            <div class="p-6 flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center">
+                                        <i data-lucide="arrow-down-left" class="w-5 h-5 text-green-600 dark:text-green-400"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-900 dark:text-white" data-bind="transaction.type">Tip received</p>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400" data-bind="transaction.from">from @crypto_gamer</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <p class="font-medium text-green-600 dark:text-green-400" data-bind="transaction.amount">+450 sats</p>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400" data-bind="transaction.time">2 hours ago</p>
+                                </div>
+                            </div>
+                            
+                            <div class="p-6 flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 bg-bitcoin/10 rounded-full flex items-center justify-center">
+                                        <i data-lucide="arrow-up-right" class="w-5 h-5 text-bitcoin"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-medium text-gray-900 dark:text-white" data-bind="transaction.type">Tip sent</p>
+                                        <p class="text-sm text-gray-500 dark:text-gray-400" data-bind="transaction.to">to @sarah_hodl</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <p class="font-medium text-bitcoin" data-bind="transaction.amount">-156 sats</p>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400" data-bind="transaction.time">4 hours ago</p>
+                                </div>
+                            </div>
+                            <!-- @END_MAP )) -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: WalletPage -->
+
+        <!-- @COMPONENT: LiveStreamModal -->
+        <div id="livestreamModal" class="fixed inset-0 bg-black z-50 hidden">
+            <div class="flex h-full">
+                <!-- Video Area -->
+                <div class="flex-1 relative">
+                    <!-- Close button -->
+                    <button class="absolute top-4 right-4 z-10 bg-black/50 text-white p-2 rounded-full hover:bg-black/70 transition-colors" data-event="click:closeLivestream">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                    
+                    <!-- Live indicator -->
+                    <div class="absolute top-4 left-4 z-10 flex items-center space-x-2 bg-black/50 px-3 py-2 rounded-full">
+                        <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                        <span class="text-white text-sm font-medium">LIVE</span>
+                        <span class="text-white/80 text-sm">1,234 viewers</span>
+                    </div>
+                    
+                    <!-- Streamer info overlay -->
+                    <div class="absolute bottom-4 left-4 z-10 flex items-center space-x-3 bg-black/50 backdrop-blur-sm px-4 py-3 rounded-xl">
+                        <!-- Streamer profile -->
+                        <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=100&h=100" 
+                             alt="Streamer profile" 
+                             class="w-10 h-10 rounded-full object-cover border-2 border-white" 
+                             data-mock="true" />
+                        <div>
+                            <p class="text-white font-medium" data-bind="livestream.streamer">crypto_gamer</p>
+                            <p class="text-white/80 text-sm">Bitcoin Trading Strategy Live</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Tip rain overlay -->
+                    <div class="absolute inset-0 pointer-events-none overflow-hidden">
+                        <div class="tip-animation absolute top-1/4 left-1/2 transform -translate-x-1/2 bg-bitcoin text-white px-3 py-1 rounded-full text-sm font-medium opacity-0">
+                            +500 sats ⚡
+                        </div>
+                    </div>
+                    
+                    <!-- Video placeholder - Gaming setup with RGB lighting -->
+                    <img src="https://images.unsplash.com/photo-1542751371-adc38448a05e?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1920&h=1080" 
+                         alt="Gaming livestream with colorful RGB lighting and multiple monitors" 
+                         class="w-full h-full object-cover" />
+                </div>
+                
+                <!-- Chat Sidebar -->
+                <div class="w-80 bg-gray-900 flex flex-col">
+                    <!-- Chat Header -->
+                    <div class="p-4 border-b border-gray-700">
+                        <h3 class="text-white font-semibold">Live Chat</h3>
+                        <p class="text-gray-400 text-sm">1,234 viewers • Be respectful</p>
+                    </div>
+                    
+                    <!-- Chat Messages -->
+                    <div class="flex-1 overflow-y-auto p-4 space-y-3">
+                        <!-- @MAP: chatMessages.map(message => ( -->
+                        <div class="flex items-start space-x-2">
+                            <!-- Chat user profile -->
+                            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=50&h=50" 
+                                 alt="Chat user" 
+                                 class="w-6 h-6 rounded-full object-cover flex-shrink-0" 
+                                 data-mock="true" />
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-bitcoin text-sm font-medium" data-bind="message.username">alex_btc</span>
+                                    <span class="text-xs text-gray-500">2m</span>
+                                </div>
+                                <p class="text-gray-200 text-sm" data-bind="message.text" data-mock="true">Great explanation about Lightning! ⚡</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Tip message -->
+                        <div class="bg-bitcoin/20 border border-bitcoin/30 rounded-lg p-3">
+                            <div class="flex items-center space-x-2">
+                                <!-- Tipper profile -->
+                                <img src="https://pixabay.com/get/g90965a10dfdef512449d1a6746efec46b41401465906ebfa056644ef2cb11bc0e05832866fa2920b518fdb9011e08b7abb68b0d6e037a93b17543149c628138b_1280.jpg" 
+                                     alt="Tip sender" 
+                                     class="w-6 h-6 rounded-full object-cover" 
+                                     data-mock="true" />
+                                <span class="text-bitcoin text-sm font-medium" data-bind="tip.username">sarah_hodl</span>
+                                <span class="text-bitcoin text-sm">tipped</span>
+                                <span class="text-lightning font-bold text-sm">500 sats</span>
+                                <i data-lucide="zap" class="w-4 h-4 text-lightning"></i>
+                            </div>
+                            <p class="text-gray-200 text-sm mt-1" data-bind="tip.message" data-mock="true">Thanks for the great content! Keep it up! 🚀</p>
+                        </div>
+                        
+                        <div class="flex items-start space-x-2">
+                            <!-- Another chat user -->
+                            <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=50&h=50" 
+                                 alt="Chat user" 
+                                 class="w-6 h-6 rounded-full object-cover flex-shrink-0" 
+                                 data-mock="true" />
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-bitcoin text-sm font-medium" data-bind="message.username">bitcoiner_dev</span>
+                                    <span class="text-xs text-gray-500">1m</span>
+                                </div>
+                                <p class="text-gray-200 text-sm" data-bind="message.text" data-mock="true">When moon? 🌙</p>
+                            </div>
+                        </div>
+                        <!-- @END_MAP )) -->
+                    </div>
+                    
+                    <!-- Chat Input -->
+                    <div class="p-4 border-t border-gray-700">
+                        <div class="flex space-x-2 mb-3">
+                            <button class="flex-1 bg-bitcoin/20 hover:bg-bitcoin/30 text-bitcoin px-3 py-2 rounded-lg text-sm font-medium transition-colors" data-event="click:quickTip" data-amount="100">
+                                ⚡ 100
+                            </button>
+                            <button class="flex-1 bg-bitcoin/20 hover:bg-bitcoin/30 text-bitcoin px-3 py-2 rounded-lg text-sm font-medium transition-colors" data-event="click:quickTip" data-amount="500">
+                                ⚡ 500
+                            </button>
+                            <button class="flex-1 bg-bitcoin/20 hover:bg-bitcoin/30 text-bitcoin px-3 py-2 rounded-lg text-sm font-medium transition-colors" data-event="click:quickTip" data-amount="1000">
+                                ⚡ 1K
+                            </button>
+                        </div>
+                        
+                        <div class="flex space-x-2">
+                            <input type="text" placeholder="Type a message..." 
+                                   class="flex-1 bg-gray-800 border border-gray-600 text-white px-3 py-2 rounded-lg focus:ring-2 focus:ring-bitcoin focus:border-transparent text-sm"
+                                   data-bind="chatInput" />
+                            <button class="bg-bitcoin hover:bg-bitcoin/90 text-white px-3 py-2 rounded-lg transition-colors" data-event="click:sendChatMessage">
+                                <i data-lucide="send" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: LiveStreamModal -->
+
+        <!-- Mobile Navigation -->
+        <nav class="fixed bottom-0 left-0 right-0 bg-white dark:bg-dark-card border-t border-gray-200 dark:border-gray-700 lg:hidden z-40">
+            <div class="grid grid-cols-5 h-16">
+                <a href="#feed" class="flex flex-col items-center justify-center text-bitcoin">
+                    <i data-lucide="home" class="w-5 h-5"></i>
+                    <span class="text-xs mt-1">Home</span>
+                </a>
+                <a href="#live" class="flex flex-col items-center justify-center text-gray-600 dark:text-gray-300">
+                    <i data-lucide="radio" class="w-5 h-5"></i>
+                    <span class="text-xs mt-1">Live</span>
+                </a>
+                <button class="flex flex-col items-center justify-center text-gray-600 dark:text-gray-300" data-event="click:createPost">
+                    <div class="w-8 h-8 bg-bitcoin rounded-full flex items-center justify-center">
+                        <i data-lucide="plus" class="w-5 h-5 text-white"></i>
+                    </div>
+                </button>
+                <a href="#wallet" class="flex flex-col items-center justify-center text-gray-600 dark:text-gray-300" data-event="click:openWallet">
+                    <i data-lucide="wallet" class="w-5 h-5"></i>
+                    <span class="text-xs mt-1">Wallet</span>
+                </a>
+                <a href="#profile" class="flex flex-col items-center justify-center text-gray-600 dark:text-gray-300">
+                    <i data-lucide="user" class="w-5 h-5"></i>
+                    <span class="text-xs mt-1">Profile</span>
+                </a>
+            </div>
+        </nav>
+    </div>
+    <!-- @END_COMPONENT: App -->
+
+    <script>
+        // Initialize Lucide icons
+        (function() {
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        })();
+
+        // Basic UI interactions (non-functional demo)
+        (function() {
+            // Modal controls
+            const tipModal = document.getElementById('tipModal');
+            const adminDashboard = document.getElementById('adminDashboard');
+            const walletPage = document.getElementById('walletPage');
+            const livestreamModal = document.getElementById('livestreamModal');
+            const withdrawForm = document.getElementById('withdrawForm');
+
+            // Demo event handlers for UI interactions
+            document.addEventListener('click', function(e) {
+                const target = e.target.closest('[data-event]');
+                if (!target) return;
+
+                const [event, handler] = target.dataset.event.split(':');
+                
+                if (event === 'click') {
+                    switch (handler) {
+                        case 'tipUser':
+                            tipModal?.classList.remove('hidden');
+                            break;
+                        case 'closeTipModal':
+                            tipModal?.classList.add('hidden');
+                            break;
+                        case 'openAdmin':
+                            adminDashboard?.classList.remove('hidden');
+                            break;
+                        case 'closeAdminDashboard':
+                            adminDashboard?.classList.add('hidden');
+                            break;
+                        case 'openWallet':
+                            walletPage?.classList.remove('hidden');
+                            break;
+                        case 'closeWallet':
+                            walletPage?.classList.add('hidden');
+                            break;
+                        case 'joinLivestream':
+                            livestreamModal?.classList.remove('hidden');
+                            break;
+                        case 'closeLivestream':
+                            livestreamModal?.classList.add('hidden');
+                            break;
+                        case 'showWithdrawForm':
+                            withdrawForm?.classList.toggle('hidden');
+                            break;
+                        case 'quickTip':
+                            // Animate tip effect
+                            const tipAmount = target.dataset.amount;
+                            showTipAnimation(tipAmount);
+                            break;
+                        case 'likePost':
+                            // Add reaction animation
+                            target.classList.add('reaction-bounce');
+                            setTimeout(() => target.classList.remove('reaction-bounce'), 500);
+                            break;
+                    }
+                }
+            });
+
+            // Admin navigation
+            document.querySelector('a[href="#admin"]')?.addEventListener('click', function(e) {
+                e.preventDefault();
+                adminDashboard?.classList.remove('hidden');
+            });
+
+            // Wallet navigation
+            document.querySelector('a[href="#wallet"]')?.addEventListener('click', function(e) {
+                e.preventDefault();
+                walletPage?.classList.remove('hidden');
+            });
+
+            // Tip animation for livestream
+            function showTipAnimation(amount) {
+                const animation = document.querySelector('.tip-animation');
+                if (animation) {
+                    animation.textContent = `+${amount} sats ⚡`;
+                    animation.style.opacity = '1';
+                    animation.style.transform = 'translate(-50%, -20px)';
+                    
+                    setTimeout(() => {
+                        animation.style.opacity = '0';
+                        animation.style.transform = 'translate(-50%, -40px)';
+                    }, 2000);
+                }
+            }
+
+            // TODO: Implement real Socket.io connections for livestream chat
+            // TODO: Implement Breez SDK integration for Lightning payments
+            // TODO: Implement file upload functionality with multer
+            // TODO: Implement JWT authentication and protected routes
+            // TODO: Implement real-time reactions and tip animations
+            // TODO: Implement admin withdrawal approval system
+            // TODO: Implement user banning functionality
+            // TODO: Implement PostgreSQL database operations with Sequelize
+        })();
+    </script>
+</body>
+</html>

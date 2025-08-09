@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BitSocial - Lightning-Powered Social Media</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        bitcoin: '#F7931A',
+                        'bitcoin-dark': '#E8840F',
+                        'lightning': '#FFD700',
+                        'dark-bg': '#1A1A1A',
+                        'surface': '#FAFAFA',
+                    },
+                    fontFamily: {
+                        'inter': ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        };
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="bg-surface font-inter">
+    <!-- @COMPONENT: App [Main application container with global state] -->
+    <div id="app-container" class="min-h-screen">
+        
+        <!-- Navigation Header -->
+        <!-- @COMPONENT: Header [User profile and wallet balance display] -->
+        <nav class="bg-white shadow-sm border-b sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
+                    <!-- Logo -->
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-bolt text-bitcoin text-2xl"></i>
+                        <span class="text-xl font-bold text-gray-900">BitSocial</span>
+                    </div>
+                    
+                    <!-- Search Bar (Desktop) -->
+                    <div class="hidden md:flex flex-1 max-w-lg mx-8">
+                        <div class="relative w-full">
+                            <input type="text" placeholder="Search posts, users..." 
+                                class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-bitcoin focus:border-transparent">
+                            <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- User Menu -->
+                    <div class="flex items-center space-x-4">
+                        <!-- Wallet Balance -->
+                        <div class="hidden sm:flex items-center space-x-2 bg-bitcoin/10 px-3 py-2 rounded-lg">
+                            <i class="fas fa-wallet text-bitcoin"></i>
+                            <span class="font-semibold text-gray-900" data-bind="user.balance">12,450</span>
+                            <span class="text-sm text-gray-600">sats</span>
+                        </div>
+                        
+                        <!-- Profile Menu -->
+                        <div class="relative">
+                            <button class="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 transition-colors">
+                                <!-- Profile placeholder image -->
+                                <div class="w-8 h-8 bg-gradient-to-r from-bitcoin to-lightning rounded-full flex items-center justify-center">
+                                    <i class="fas fa-user text-white text-sm"></i>
+                                </div>
+                                <span class="hidden md:block font-medium" data-bind="user.username">@johndoe</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        <!-- @END_COMPONENT: Header -->
+
+        <!-- Main Layout -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                
+                <!-- Sidebar Navigation -->
+                <div class="lg:col-span-1">
+                    <div class="bg-white rounded-lg shadow-sm p-4 sticky top-24">
+                        <nav class="space-y-2">
+                            <a href="#feed" class="flex items-center space-x-3 px-3 py-2 text-bitcoin bg-bitcoin/10 rounded-lg font-medium">
+                                <i class="fas fa-home"></i>
+                                <span>Feed</span>
+                            </a>
+                            <a href="#wallet" class="flex items-center space-x-3 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                                <i class="fas fa-wallet"></i>
+                                <span>Wallet</span>
+                            </a>
+                            <a href="#profile" class="flex items-center space-x-3 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                                <i class="fas fa-user"></i>
+                                <span>Profile</span>
+                            </a>
+                            <a href="#settings" class="flex items-center space-x-3 px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                                <i class="fas fa-cog"></i>
+                                <span>Settings</span>
+                            </a>
+                            <!-- Admin only -->
+                            <div data-admin-only="true" class="border-t pt-2 mt-4">
+                                <a href="#admin" class="flex items-center space-x-3 px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                    <i class="fas fa-shield-alt"></i>
+                                    <span>Admin Panel</span>
+                                </a>
+                            </div>
+                        </nav>
+                    </div>
+                </div>
+
+                <!-- Main Content Area -->
+                <div class="lg:col-span-3">
+                    
+                    <!-- Create Post Component -->
+                    <!-- @COMPONENT: ContentCreator [Post creation form with file upload] -->
+                    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+                        <div class="flex items-start space-x-4">
+                            <div class="w-10 h-10 bg-gradient-to-r from-bitcoin to-lightning rounded-full flex items-center justify-center">
+                                <i class="fas fa-user text-white"></i>
+                            </div>
+                            <div class="flex-1">
+                                <textarea 
+                                    placeholder="What's happening on the Lightning Network?"
+                                    class="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-bitcoin focus:border-transparent"
+                                    rows="3"></textarea>
+                                
+                                <div class="flex items-center justify-between mt-4">
+                                    <div class="flex items-center space-x-4">
+                                        <button class="flex items-center space-x-2 text-gray-600 hover:text-bitcoin transition-colors">
+                                            <i class="fas fa-image"></i>
+                                            <span>Photo</span>
+                                        </button>
+                                        <button class="flex items-center space-x-2 text-gray-600 hover:text-bitcoin transition-colors">
+                                            <i class="fas fa-video"></i>
+                                            <span>Video</span>
+                                        </button>
+                                        <button class="flex items-center space-x-2 text-gray-600 hover:text-bitcoin transition-colors">
+                                            <i class="fas fa-poll"></i>
+                                            <span>Poll</span>
+                                        </button>
+                                    </div>
+                                    <button class="bg-bitcoin hover:bg-bitcoin-dark text-white font-semibold px-6 py-2 rounded-lg transition-colors"
+                                            data-event="click:handlePostSubmit">
+                                        Post
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- @END_COMPONENT: ContentCreator -->
+
+                    <!-- Content Feed -->
+                    <!-- @COMPONENT: ContentFeed [Main scrollable post feed] -->
+                    <div class="space-y-6">
+                        
+                        <!-- @MAP: posts.map(post => ( -->
+                        <!-- @COMPONENT: Post [Individual post display with reactions] -->
+                        <article class="bg-white rounded-lg shadow-sm overflow-hidden">
+                            <!-- Post Header -->
+                            <div class="p-6 pb-4">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                                            <i class="fas fa-user text-white"></i>
+                                        </div>
+                                        <div>
+                                            <h3 class="font-semibold text-gray-900" data-bind="post.author.username">@alice_bitcoin</h3>
+                                            <p class="text-sm text-gray-500" data-bind="post.created_at">2 hours ago</p>
+                                        </div>
+                                    </div>
+                                    <button class="text-gray-400 hover:text-gray-600">
+                                        <i class="fas fa-ellipsis-h"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Post Content -->
+                            <div class="px-6 pb-4">
+                                <p class="text-gray-900 mb-4" data-bind="post.text">
+                                    Just received my first Lightning tip! ⚡️ The future of micropayments is here. 
+                                    #Bitcoin #LightningNetwork #Sats
+                                </p>
+                                
+                                <!-- Post Image (if exists) -->
+                                <div class="rounded-lg overflow-hidden" data-conditional="post.content_url && post.content_type === 'image'">
+                                    <!-- A cryptocurrency trading chart showing Bitcoin price movements -->
+                                    <img src="https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&h=400" 
+                                         alt="Bitcoin trading chart" 
+                                         class="w-full h-64 object-cover" data-bind="post.content_url" />
+                                </div>
+                            </div>
+
+                            <!-- Post Actions -->
+                            <div class="px-6 py-4 border-t border-gray-100">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-6">
+                                        <!-- Like Button -->
+                                        <button class="flex items-center space-x-2 text-gray-600 hover:text-red-500 transition-colors"
+                                                data-event="click:handleReaction" data-reaction="like">
+                                            <i class="far fa-heart"></i>
+                                            <span data-bind="post.likes_count">24</span>
+                                        </button>
+                                        
+                                        <!-- Comment Button -->
+                                        <button class="flex items-center space-x-2 text-gray-600 hover:text-blue-500 transition-colors">
+                                            <i class="far fa-comment"></i>
+                                            <span data-bind="post.comments_count">8</span>
+                                        </button>
+                                        
+                                        <!-- Lightning Tip Button -->
+                                        <button class="flex items-center space-x-2 text-gray-600 hover:text-bitcoin transition-colors"
+                                                data-event="click:handleTipModal" data-implementation="Opens Lightning tip modal">
+                                            <i class="fas fa-bolt"></i>
+                                            <span>Tip</span>
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Share Button -->
+                                    <button class="text-gray-600 hover:text-gray-900 transition-colors">
+                                        <i class="fas fa-share"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </article>
+                        <!-- @END_COMPONENT: Post -->
+
+                        <!-- Second Post Example -->
+                        <article class="bg-white rounded-lg shadow-sm overflow-hidden">
+                            <div class="p-6 pb-4">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-12 h-12 bg-gradient-to-r from-green-500 to-teal-600 rounded-full flex items-center justify-center">
+                                            <i class="fas fa-user text-white"></i>
+                                        </div>
+                                        <div>
+                                            <h3 class="font-semibold text-gray-900">@satoshi_dev</h3>
+                                            <p class="text-sm text-gray-500">4 hours ago</p>
+                                        </div>
+                                    </div>
+                                    <button class="text-gray-400 hover:text-gray-600">
+                                        <i class="fas fa-ellipsis-h"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="px-6 pb-4">
+                                <p class="text-gray-900 mb-4">
+                                    Building the future of social media on Bitcoin Lightning! ⚡️🚀
+                                    Every reaction, every tip, every interaction is a Lightning transaction.
+                                </p>
+                                
+                                <!-- Video thumbnail -->
+                                <div class="relative rounded-lg overflow-hidden bg-gray-900">
+                                    <!-- A developer working on code with multiple monitors showing cryptocurrency data -->
+                                    <img src="https://images.unsplash.com/photo-1551434678-e076c223a692?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&h=400" 
+                                         alt="Developer coding with crypto monitors" 
+                                         class="w-full h-64 object-cover opacity-75" />
+                                    <div class="absolute inset-0 flex items-center justify-center">
+                                        <button class="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-white/30 transition-colors">
+                                            <i class="fas fa-play text-white text-xl ml-1"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="px-6 py-4 border-t border-gray-100">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-6">
+                                        <button class="flex items-center space-x-2 text-red-500">
+                                            <i class="fas fa-heart"></i>
+                                            <span>156</span>
+                                        </button>
+                                        <button class="flex items-center space-x-2 text-gray-600 hover:text-blue-500 transition-colors">
+                                            <i class="far fa-comment"></i>
+                                            <span>23</span>
+                                        </button>
+                                        <button class="flex items-center space-x-2 text-bitcoin">
+                                            <i class="fas fa-bolt"></i>
+                                            <span>Tip</span>
+                                        </button>
+                                    </div>
+                                    <button class="text-gray-600 hover:text-gray-900 transition-colors">
+                                        <i class="fas fa-share"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </article>
+                        <!-- @END_MAP )) -->
+
+                        <!-- Load More Button -->
+                        <div class="text-center py-8">
+                            <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium px-8 py-3 rounded-lg transition-colors"
+                                    data-event="click:loadMorePosts">
+                                Load More Posts
+                            </button>
+                        </div>
+                    </div>
+                    <!-- @END_COMPONENT: ContentFeed -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Lightning Tip Modal -->
+        <!-- @COMPONENT: TipModal [Lightning payment interface] -->
+        <div id="tip-modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50" data-modal="tip">
+            <div class="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-semibold">Send Lightning Tip ⚡️</h3>
+                    <button class="text-gray-400 hover:text-gray-600" data-event="click:closeTipModal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-gradient-to-r from-bitcoin to-lightning rounded-full flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-user text-white text-xl"></i>
+                        </div>
+                        <p class="font-semibold" data-bind="tip.recipient.username">@alice_bitcoin</p>
+                    </div>
+                    
+                    <!-- Tip Amount Selection -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Tip Amount (sats)</label>
+                        <div class="grid grid-cols-3 gap-2 mb-4">
+                            <button class="bg-bitcoin/10 hover:bg-bitcoin/20 text-bitcoin font-medium py-2 px-3 rounded-lg transition-colors"
+                                    data-tip-amount="100">100</button>
+                            <button class="bg-bitcoin/10 hover:bg-bitcoin/20 text-bitcoin font-medium py-2 px-3 rounded-lg transition-colors"
+                                    data-tip-amount="500">500</button>
+                            <button class="bg-bitcoin/10 hover:bg-bitcoin/20 text-bitcoin font-medium py-2 px-3 rounded-lg transition-colors"
+                                    data-tip-amount="1000">1,000</button>
+                        </div>
+                        <input type="number" placeholder="Custom amount" 
+                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-bitcoin focus:border-transparent">
+                    </div>
+                    
+                    <!-- Optional Message -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Message (optional)</label>
+                        <textarea placeholder="Great post! ⚡️" 
+                                  class="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-bitcoin focus:border-transparent"
+                                  rows="2"></textarea>
+                    </div>
+                    
+                    <!-- Send Button -->
+                    <button class="w-full bg-bitcoin hover:bg-bitcoin-dark text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+                            data-event="click:sendLightningTip" data-implementation="Calls /api/lightning/tip endpoint">
+                        <i class="fas fa-bolt mr-2"></i>
+                        Send Tip
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: TipModal -->
+
+        <!-- Wallet Page (Hidden by default) -->
+        <!-- @COMPONENT: WalletPage [User wallet interface with withdrawal requests] -->
+        <div id="wallet-page" class="hidden max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+                <div class="bg-gradient-to-r from-bitcoin to-lightning p-6 text-white">
+                    <h2 class="text-2xl font-bold mb-2">Lightning Wallet ⚡️</h2>
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-wallet text-xl"></i>
+                        <span class="text-3xl font-bold" data-bind="user.balance">12,450</span>
+                        <span class="text-lg opacity-90">sats</span>
+                    </div>
+                    <p class="text-sm opacity-75 mt-1">≈ $4.52 USD</p>
+                </div>
+                
+                <div class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Receive Section -->
+                        <div>
+                            <h3 class="text-lg font-semibold mb-4">Receive Bitcoin</h3>
+                            <div class="space-y-4">
+                                <button class="w-full bg-green-100 hover:bg-green-200 text-green-800 font-medium py-3 px-4 rounded-lg transition-colors">
+                                    <i class="fas fa-qrcode mr-2"></i>
+                                    Generate Lightning Invoice
+                                </button>
+                                <button class="w-full bg-blue-100 hover:bg-blue-200 text-blue-800 font-medium py-3 px-4 rounded-lg transition-colors">
+                                    <i class="fas fa-link mr-2"></i>
+                                    Get On-chain Address
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Withdraw Section -->
+                        <div>
+                            <h3 class="text-lg font-semibold mb-4">Withdraw Bitcoin</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Destination Address</label>
+                                    <input type="text" placeholder="bc1... or lightning invoice" 
+                                           class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-bitcoin focus:border-transparent">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Amount (sats)</label>
+                                    <input type="number" placeholder="1000" 
+                                           class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-bitcoin focus:border-transparent">
+                                </div>
+                                <button class="w-full bg-bitcoin hover:bg-bitcoin-dark text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+                                        data-event="click:submitWithdrawalRequest" data-implementation="Calls /api/lightning/withdraw-request">
+                                    Request Withdrawal
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Transaction History -->
+                    <div class="mt-8">
+                        <h3 class="text-lg font-semibold mb-4">Recent Transactions</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200">
+                                    <!-- @MAP: transactions.map(tx => ( -->
+                                    <tr data-mock="true">
+                                        <td class="px-4 py-4 text-sm text-gray-900">
+                                            <div class="flex items-center space-x-2">
+                                                <i class="fas fa-arrow-up text-green-500"></i>
+                                                <span>Tip Received</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-4 text-sm font-semibold text-green-600">+500 sats</td>
+                                        <td class="px-4 py-4 text-sm">
+                                            <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">Completed</span>
+                                        </td>
+                                        <td class="px-4 py-4 text-sm text-gray-500">2 hours ago</td>
+                                    </tr>
+                                    <tr data-mock="true">
+                                        <td class="px-4 py-4 text-sm text-gray-900">
+                                            <div class="flex items-center space-x-2">
+                                                <i class="fas fa-arrow-down text-red-500"></i>
+                                                <span>Withdrawal</span>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-4 text-sm font-semibold text-red-600">-2,000 sats</td>
+                                        <td class="px-4 py-4 text-sm">
+                                            <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs font-medium">Pending</span>
+                                        </td>
+                                        <td class="px-4 py-4 text-sm text-gray-500">1 day ago</td>
+                                    </tr>
+                                    <!-- @END_MAP )) -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: WalletPage -->
+
+        <!-- Admin Dashboard (Hidden by default) -->
+        <!-- @COMPONENT: AdminDashboard [Administrative interface for moderation] -->
+        <div id="admin-dashboard" class="hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+                <p class="text-gray-600 mt-2">Manage users, content, and withdrawal requests</p>
+            </div>
+            
+            <!-- Dashboard Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-users text-blue-600 text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm text-gray-600">Total Users</p>
+                            <p class="text-2xl font-bold text-gray-900">1,284</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-file-alt text-green-600 text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm text-gray-600">Total Posts</p>
+                            <p class="text-2xl font-bold text-gray-900">8,432</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-bitcoin/20 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-bolt text-bitcoin text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm text-gray-600">Total Tips</p>
+                            <p class="text-2xl font-bold text-gray-900">45,123</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow-sm p-6">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm text-gray-600">Pending Requests</p>
+                            <p class="text-2xl font-bold text-gray-900">12</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Tabs -->
+            <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+                <div class="border-b border-gray-200">
+                    <nav class="flex space-x-8 px-6">
+                        <button class="py-4 border-b-2 border-bitcoin text-bitcoin font-medium">
+                            Withdrawal Requests
+                        </button>
+                        <button class="py-4 text-gray-500 hover:text-gray-700 font-medium">
+                            User Management
+                        </button>
+                        <button class="py-4 text-gray-500 hover:text-gray-700 font-medium">
+                            Content Moderation
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- Withdrawal Requests Tab -->
+                <!-- @COMPONENT: WithdrawalRequestsList [Admin approval interface] -->
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-semibold">Pending Withdrawal Requests</h3>
+                        <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition-colors">
+                            <i class="fas fa-sync-alt mr-2"></i>
+                            Refresh
+                        </button>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Destination</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Requested</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                <!-- @MAP: withdrawalRequests.map(request => ( -->
+                                <tr data-mock="true">
+                                    <td class="px-4 py-4 text-sm">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                                                <i class="fas fa-user text-white text-xs"></i>
+                                            </div>
+                                            <div>
+                                                <p class="font-medium text-gray-900">@alice_bitcoin</p>
+                                                <p class="text-gray-500 text-xs">ID: 1284</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-4 text-sm font-semibold">
+                                        <span class="text-red-600">-50,000 sats</span>
+                                        <p class="text-xs text-gray-500">≈ $18.12</p>
+                                    </td>
+                                    <td class="px-4 py-4 text-sm">
+                                        <p class="font-mono text-xs bg-gray-100 p-1 rounded">bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh</p>
+                                        <p class="text-xs text-gray-500 mt-1">On-chain</p>
+                                    </td>
+                                    <td class="px-4 py-4 text-sm text-gray-500">2 hours ago</td>
+                                    <td class="px-4 py-4 text-sm">
+                                        <div class="flex items-center space-x-2">
+                                            <button class="bg-green-100 hover:bg-green-200 text-green-800 px-3 py-1 rounded text-xs font-medium transition-colors"
+                                                    data-event="click:approveWithdrawal" data-implementation="Calls /api/admin/withdrawal-requests/:id/approve">
+                                                Approve
+                                            </button>
+                                            <button class="bg-red-100 hover:bg-red-200 text-red-800 px-3 py-1 rounded text-xs font-medium transition-colors"
+                                                    data-event="click:denyWithdrawal" data-implementation="Calls /api/admin/withdrawal-requests/:id/deny">
+                                                Deny
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                
+                                <tr data-mock="true">
+                                    <td class="px-4 py-4 text-sm">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-8 h-8 bg-gradient-to-r from-green-500 to-teal-600 rounded-full flex items-center justify-center">
+                                                <i class="fas fa-user text-white text-xs"></i>
+                                            </div>
+                                            <div>
+                                                <p class="font-medium text-gray-900">@bob_lightning</p>
+                                                <p class="text-gray-500 text-xs">ID: 892</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-4 text-sm font-semibold">
+                                        <span class="text-red-600">-25,000 sats</span>
+                                        <p class="text-xs text-gray-500">≈ $9.06</p>
+                                    </td>
+                                    <td class="px-4 py-4 text-sm">
+                                        <p class="font-mono text-xs bg-gray-100 p-1 rounded">lnbc250u1p3xk...</p>
+                                        <p class="text-xs text-gray-500 mt-1">Lightning</p>
+                                    </td>
+                                    <td class="px-4 py-4 text-sm text-gray-500">5 hours ago</td>
+                                    <td class="px-4 py-4 text-sm">
+                                        <div class="flex items-center space-x-2">
+                                            <button class="bg-green-100 hover:bg-green-200 text-green-800 px-3 py-1 rounded text-xs font-medium transition-colors">
+                                                Approve
+                                            </button>
+                                            <button class="bg-red-100 hover:bg-red-200 text-red-800 px-3 py-1 rounded text-xs font-medium transition-colors">
+                                                Deny
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <!-- @END_MAP )) -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <!-- @END_COMPONENT: WithdrawalRequestsList -->
+
+                <!-- User Management Tab -->
+                <div class="p-6 hidden">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-semibold">User Management</h3>
+                        <div class="flex items-center space-x-4">
+                            <input type="text" placeholder="Search users..." 
+                                   class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-bitcoin focus:border-transparent">
+                            <button class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg transition-colors">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Balance</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Posts</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                <tr data-mock="true">
+                                    <td class="px-4 py-4 text-sm">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                                                <i class="fas fa-user text-white text-xs"></i>
+                                            </div>
+                                            <div>
+                                                <p class="font-medium text-gray-900">@alice_bitcoin</p>
+                                                <p class="text-gray-500 text-xs">alice@example.com</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-4 py-4 text-sm">15,432 sats</td>
+                                    <td class="px-4 py-4 text-sm">23</td>
+                                    <td class="px-4 py-4 text-sm">
+                                        <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">Active</span>
+                                    </td>
+                                    <td class="px-4 py-4 text-sm">
+                                        <button class="bg-red-100 hover:bg-red-200 text-red-800 px-3 py-1 rounded text-xs font-medium transition-colors"
+                                                data-event="click:banUser" data-implementation="Calls /api/admin/users/:id/ban">
+                                            Ban User
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: AdminDashboard -->
+
+        <!-- Auth Pages (Login/Register) -->
+        <!-- @COMPONENT: AuthPages [Authentication forms] -->
+        <div id="auth-container" class="hidden min-h-screen bg-gradient-to-br from-bitcoin to-lightning flex items-center justify-center p-4">
+            <div class="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
+                <div class="text-center mb-8">
+                    <div class="flex items-center justify-center space-x-2 mb-4">
+                        <i class="fas fa-bolt text-bitcoin text-3xl"></i>
+                        <span class="text-2xl font-bold text-gray-900">BitSocial</span>
+                    </div>
+                    <p class="text-gray-600">Lightning-powered social media</p>
+                </div>
+                
+                <!-- Login Form -->
+                <div id="login-form">
+                    <h2 class="text-xl font-semibold mb-6">Sign In</h2>
+                    <form class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                            <input type="email" required 
+                                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-bitcoin focus:border-transparent">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                            <input type="password" required 
+                                   class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-bitcoin focus:border-transparent">
+                        </div>
+                        <button type="submit" 
+                                class="w-full bg-bitcoin hover:bg-bitcoin-dark text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+                                data-event="click:handleLogin" data-implementation="Calls /api/auth/login">
+                            Sign In
+                        </button>
+                    </form>
+                    <p class="text-center text-gray-600 mt-6">
+                        Don't have an account? 
+                        <button class="text-bitcoin hover:text-bitcoin-dark font-medium" data-event="click:showRegister">
+                            Sign up
+                        </button>
+                    </p>
+                </div>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: AuthPages -->
+
+    </div>
+    <!-- @END_COMPONENT: App -->
+
+    <!-- JavaScript for Basic Interactions -->
+    <script>
+        (function() {
+            // TODO: Implement proper React components and state management
+            // TODO: Add API integration with JWT authentication
+            // TODO: Implement real Lightning payment processing with Breez SDK
+            // TODO: Add WebSocket connection for real-time updates
+            
+            // Modal functionality
+            function showModal(modalId) {
+                const modal = document.getElementById(modalId);
+                if (modal) {
+                    modal.classList.remove('hidden');
+                    modal.classList.add('flex');
+                }
+            }
+            
+            function hideModal(modalId) {
+                const modal = document.getElementById(modalId);
+                if (modal) {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                }
+            }
+            
+            // Page navigation
+            function showPage(pageId) {
+                // Hide all pages
+                const pages = ['wallet-page', 'admin-dashboard', 'auth-container'];
+                pages.forEach(id => {
+                    const page = document.getElementById(id);
+                    if (page) page.classList.add('hidden');
+                });
+                
+                // Show main content by default
+                const mainContent = document.querySelector('#app-container > div:nth-child(2)');
+                if (mainContent) mainContent.style.display = 'block';
+                
+                // Show specific page
+                if (pageId && pageId !== 'feed') {
+                    const targetPage = document.getElementById(pageId);
+                    if (targetPage) {
+                        targetPage.classList.remove('hidden');
+                        if (mainContent) mainContent.style.display = 'none';
+                    }
+                }
+            }
+            
+            // Event delegation for dynamic content
+            document.addEventListener('click', function(e) {
+                const target = e.target.closest('button, a');
+                if (!target) return;
+                
+                // Handle navigation
+                const href = target.getAttribute('href');
+                if (href) {
+                    e.preventDefault();
+                    const pageId = href.replace('#', '');
+                    if (pageId === 'wallet') {
+                        showPage('wallet-page');
+                    } else if (pageId === 'admin') {
+                        showPage('admin-dashboard');
+                    } else {
+                        showPage('feed');
+                    }
+                }
+                
+                // Handle tip modal
+                if (target.closest('[data-event="click:handleTipModal"]')) {
+                    showModal('tip-modal');
+                }
+                
+                // Handle modal close
+                if (target.closest('[data-event="click:closeTipModal"]')) {
+                    hideModal('tip-modal');
+                }
+                
+                // Handle tip amount selection
+                const tipAmount = target.getAttribute('data-tip-amount');
+                if (tipAmount) {
+                    const customInput = document.querySelector('#tip-modal input[type="number"]');
+                    if (customInput) customInput.value = tipAmount;
+                    
+                    // Remove active class from all buttons
+                    document.querySelectorAll('[data-tip-amount]').forEach(btn => {
+                        btn.classList.remove('bg-bitcoin', 'text-white');
+                        btn.classList.add('bg-bitcoin/10', 'text-bitcoin');
+                    });
+                    
+                    // Add active class to clicked button
+                    target.classList.remove('bg-bitcoin/10', 'text-bitcoin');
+                    target.classList.add('bg-bitcoin', 'text-white');
+                }
+                
+                // Handle reactions
+                if (target.closest('[data-event="click:handleReaction"]')) {
+                    const icon = target.querySelector('i');
+                    const count = target.querySelector('span');
+                    if (icon && count) {
+                        if (icon.classList.contains('far')) {
+                            icon.classList.remove('far');
+                            icon.classList.add('fas');
+                            target.classList.add('text-red-500');
+                            count.textContent = parseInt(count.textContent) + 1;
+                        } else {
+                            icon.classList.remove('fas');
+                            icon.classList.add('far');
+                            target.classList.remove('text-red-500');
+                            count.textContent = parseInt(count.textContent) - 1;
+                        }
+                    }
+                }
+            });
+            
+            // Close modals on background click
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('fixed') && e.target.classList.contains('inset-0')) {
+                    const modalId = e.target.getAttribute('data-modal');
+                    if (modalId) {
+                        hideModal(modalId + '-modal');
+                    }
+                }
+            });
+            
+            // Initialize app
+            showPage('feed');
+            
+            // Mock authentication state
+            const isAuthenticated = true;
+            const isAdmin = true; // Set to true for demo purposes
+            
+            if (!isAuthenticated) {
+                showPage('auth-container');
+                document.getElementById('auth-container').classList.remove('hidden');
+            }
+            
+            // Show/hide admin features based on user role
+            const adminElements = document.querySelectorAll('[data-admin-only]');
+            adminElements.forEach(el => {
+                if (isAdmin) {
+                    el.style.display = 'block';
+                } else {
+                    el.style.display = 'none';
+                }
+            });
+        })();
+    </script>
+</body>
+</html>
