@@ -85,7 +85,7 @@ For Lightning Network functionality, you'll need:
 
 1. **Clone the repository**
 ```bash
-git clone <your-repository-url>
+git clone https://github.com/mbyotwo3-beep/bitsocial.git
 cd satstream
 ```
 
